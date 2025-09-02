@@ -181,17 +181,6 @@ research_paper/
 
 ---
 
-## Acknowledgment
-
-본 논문은 산업통상자원부 재원으로 한국산업기술기획평가원(KEIT)의 지원을 받아 수행된 연구 결과입니다.
-
-**과제 정보:**
-- 사업명: 자동차산업기술개발사업(스마트카)
-- 과제명: 자율주행차 전장부품 결함·오류 대응을 위한 기능 가변형 아키텍처 및 평가·검증기술 개발
-- 과제 번호: RS-2024-00404601
-
----
-
 ## 참고문헌
 
 1. IEEE 802.1Qav - Forwarding and Queuing Enhancements for Time-Sensitive Streams
