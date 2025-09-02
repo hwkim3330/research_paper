@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TSN Credit-Based Shaper 연구 - 차량용 이더넷 QoS 보장</title>
+    <meta name="description" content="IEEE 802.1Qav Credit-Based Shaper를 활용한 차량용 이더넷 네트워크 QoS 보장 메커니즘 구현 및 성능 검증">
+    <meta name="keywords" content="TSN, Credit-Based Shaper, CBS, Automotive Ethernet, QoS, IEEE 802.1Qav, Microchip LAN9692">
+    <meta name="author" content="김현우, 송현수, 안종화, 박부식">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="TSN Credit-Based Shaper 연구">
+    <meta property="og:description" content="차량용 이더넷에서 CBS를 활용한 QoS 보장 메커니즘 구현">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://hwkim3330.github.io/research_paper/">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🚗</text></svg>">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Prism.js for code highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --border: #e5e7eb;
+            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+        
+        /* Hero Section */
+        .hero {
+            margin-top: 80px;
+            padding: 4rem 0;
+            background: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--warning));
+        }
+        
+        .hero-content {
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+        
+        .hero .subtitle {
+            font-size: 1.25rem;
+            color: #6b7280;
+            margin-bottom: 2rem;
+        }
+        
+        .badges {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 3rem;
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--light);
+            border: 1px solid var(--border);
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .badge-icon {
+            width: 20px;
+            height: 20px;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .stat-value {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 1rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            background: #10b98120;
+            color: var(--secondary);
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .stat-change.negative {
+            background: #ef444420;
+            color: var(--danger);
+        }
+        
+        /* Main Content */
+        main {
+            background: white;
+            margin: 2rem auto;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .content-section {
+            padding: 4rem 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .content-section:last-child {
+            border-bottom: none;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+        
+        .section-subtitle {
+            font-size: 1.125rem;
+            color: #6b7280;
+        }
+        
+        /* Feature Cards */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .feature-card {
+            background: var(--light);
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+        
+        .feature-card:hover {
+            background: white;
+            box-shadow: var(--shadow);
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--primary);
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+        
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+        
+        .feature-description {
+            color: #6b7280;
+            line-height: 1.7;
+        }
+        
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 2rem 0;
+            padding: 2rem;
+            background: var(--light);
+            border-radius: 1rem;
+        }
+        
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        /* Architecture Diagram */
+        .architecture {
+            background: var(--light);
+            padding: 3rem;
+            border-radius: 1rem;
+            margin: 3rem 0;
+        }
+        
+        .arch-diagram {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            position: relative;
+            padding: 2rem 0;
+        }
+        
+        .arch-node {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            text-align: center;
+            z-index: 2;
+            position: relative;
+        }
+        
+        .arch-node-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .arch-connection {
+            position: absolute;
+            top: 50%;
+            left: 25%;
+            right: 25%;
+            height: 2px;
+            background: var(--primary);
+            z-index: 1;
+        }
+        
+        /* Code Blocks */
+        .code-block {
+            margin: 2rem 0;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        
+        .code-header {
+            background: #1f2937;
+            color: white;
+            padding: 1rem 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .copy-btn {
+            background: #374151;
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background 0.3s;
+        }
+        
+        .copy-btn:hover {
+            background: #4b5563;
+        }
+        
+        pre[class*="language-"] {
+            margin: 0;
+            border-radius: 0;
+        }
+        
+        /* Results Table */
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            box-shadow: var(--shadow);
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        
+        .results-table thead {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .results-table th,
+        .results-table td {
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .results-table tbody tr {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.3s;
+        }
+        
+        .results-table tbody tr:hover {
+            background: var(--light);
+        }
+        
+        .results-table tbody tr:last-child {
+            border-bottom: none;
+        }
+        
+        .improvement {
+            color: var(--secondary);
+            font-weight: 600;
+        }
+        
+        .degradation {
+            color: var(--danger);
+            font-weight: 600;
+        }
+        
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding: 2rem 0;
+            margin: 3rem 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+        
+        .timeline-item {
+            display: flex;
+            justify-content: flex-end;
+            padding-right: 30px;
+            position: relative;
+            margin: 2rem 0;
+            width: 50%;
+        }
+        
+        .timeline-item:nth-child(odd) {
+            align-self: flex-end;
+            justify-content: flex-start;
+            padding-left: 30px;
+            padding-right: 0;
+            margin-left: 50%;
+        }
+        
+        .timeline-item-content {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            max-width: 400px;
+        }
+        
+        .timeline-item-content h3 {
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+        
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border: 4px solid white;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        
+        /* CTA Section */
+        .cta {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+        
+        .cta h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .cta p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: white;
+            color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .btn-secondary:hover {
+            background: white;
+            color: var(--primary);
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .footer-section h3 {
+            margin-bottom: 1rem;
+        }
+        
+        .footer-section ul {
+            list-style: none;
+        }
+        
+        .footer-section a {
+            color: #9ca3af;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-section a:hover {
+            color: white;
+        }
+        
+        .footer-bottom {
+            padding-top: 2rem;
+            border-top: 1px solid #374151;
+            color: #9ca3af;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .timeline::before {
+                left: 30px;
+            }
+            
+            .timeline-item {
+                width: 100%;
+                padding-left: 60px;
+                padding-right: 0;
+            }
+            
+            .timeline-item:nth-child(odd) {
+                margin-left: 0;
+            }
+            
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        /* Smooth Scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <nav>
+                <a href="#" class="logo">
+                    <span>🚗</span>
+                    <span>TSN Research</span>
+                </a>
+                <ul class="nav-links">
+                    <li><a href="#overview">개요</a></li>
+                    <li><a href="#theory">이론</a></li>
+                    <li><a href="#implementation">구현</a></li>
+                    <li><a href="#results">결과</a></li>
+                    <li><a href="#download">자료</a></li>
+                    <li><a href="https://github.com/hwkim3330/research_paper" target="_blank">GitHub</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content animate-in">
+                <h1>차량용 이더넷 TSN Credit-Based Shaper<br>구현 및 성능 검증</h1>
+                <p class="subtitle">IEEE 802.1Qav CBS 메커니즘을 활용한 QoS 보장 시스템의 실증적 연구</p>
+                
+                <div class="badges">
+                    <span class="badge">
+                        <svg class="badge-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        IEEE 802.1Qav
+                    </span>
+                    <span class="badge">
+                        <svg class="badge-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M13 7H7v6h6V7z"></path>
+                            <path fill-rule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clip-rule="evenodd"></path>
+                        </svg>
+                        Microchip LAN9692
+                    </span>
+                    <span class="badge">
+                        <svg class="badge-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                        4-Port TSN Switch
+                    </span>
+                </div>
+                
+                <!-- Key Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">96.9%</div>
+                        <div class="stat-label">프레임 손실 감소</div>
+                        <span class="stat-change">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            21.5% → 0.67%
+                        </span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">92.7%</div>
+                        <div class="stat-label">지터 개선</div>
+                        <span class="stat-change">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            42.3ms → 3.1ms
+                        </span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">87.9%</div>
+                        <div class="stat-label">지연 감소</div>
+                        <span class="stat-change">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            68.4ms → 8.3ms
+                        </span>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">98%</div>
+                        <div class="stat-label">대역폭 보장률</div>
+                        <span class="stat-change">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            55% → 98%
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Main Content -->
+    <main>
+        <!-- Overview Section -->
+        <section id="overview" class="content-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">연구 개요</h2>
+                    <p class="section-subtitle">차세대 자동차 네트워크를 위한 핵심 기술</p>
+                </div>
+                
+                <div class="features">
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3 class="feature-title">연구 목적</h3>
+                        <p class="feature-description">
+                            자율주행 및 커넥티드 카 시대에 요구되는 대용량, 실시간, 고신뢰성 통신을 
+                            단일 이더넷 백본으로 제공하기 위한 CBS 메커니즘의 실증적 검증
+                        </p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔬</div>
+                        <h3 class="feature-title">실험 방법</h3>
+                        <p class="feature-description">
+                            Microchip LAN9692 TSN 스위치를 활용하여 실제 H.264 영상 스트림과 
+                            대용량 BE 트래픽이 혼재하는 환경에서 CBS 효과 측정
+                        </p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3 class="feature-title">핵심 성과</h3>
+                        <p class="feature-description">
+                            네트워크 혼잡 상황에서도 영상 스트림의 프레임 손실률을 96.9% 감소시키고,
+                            평균 지터를 92.7% 개선하여 안정적인 QoS 보장
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Architecture Diagram -->
+                <div class="architecture">
+                    <h3 style="text-align: center; margin-bottom: 2rem;">시스템 아키텍처</h3>
+                    <div class="arch-diagram">
+                        <div class="arch-connection"></div>
+                        <div class="arch-node">
+                            <div class="arch-node-title">송신 PC</div>
+                            <div>Video Stream</div>
+                            <div>15 Mbps × 2</div>
+                        </div>
+                        <div class="arch-node">
+                            <div class="arch-node-title">TSN Switch</div>
+                            <div>LAN9692</div>
+                            <div>CBS Enabled</div>
+                        </div>
+                        <div class="arch-node">
+                            <div class="arch-node-title">수신 PC</div>
+                            <div>VLC Player</div>
+                            <div>QoS 측정</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Theory Section -->
+        <section id="theory" class="content-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">CBS 이론적 배경</h2>
+                    <p class="section-subtitle">Credit-Based Shaper 동작 원리</p>
+                </div>
+                
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>CBS 파라미터 계산</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code class="language-python">def calculate_cbs_parameters(stream_rate, port_rate, margin=0.33):
+    """
+    CBS 파라미터 계산 함수
+    
+    Args:
+        stream_rate: 스트림 비트레이트 (bps)
+        port_rate: 포트 속도 (bps)
+        margin: 여유율 (기본 33%)
+    
+    Returns:
+        dict: CBS 파라미터
+    """
+    idle_slope = stream_rate * (1 + margin)
+    send_slope = idle_slope - port_rate
+    max_frame_size = 1518  # bytes
+    
+    hi_credit = (idle_slope * max_frame_size * 8) / port_rate
+    lo_credit = -hi_credit
+    
+    return {
+        'idle_slope': idle_slope,
+        'send_slope': send_slope,
+        'hi_credit': hi_credit,
+        'lo_credit': lo_credit
+    }
+
+# 예시: 15 Mbps 영상 스트림, 1 Gbps 포트
+params = calculate_cbs_parameters(15e6, 1e9)
+print(f"idleSlope: {params['idle_slope']/1e6:.1f} Mbps")
+print(f"hiCredit: {params['hi_credit']:.0f} bits")</code></pre>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="creditChart"></canvas>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Implementation Section -->
+        <section id="implementation" class="content-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">시스템 구현</h2>
+                    <p class="section-subtitle">YANG 기반 TSN 스위치 설정</p>
+                </div>
+                
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>CBS Configuration (YAML)</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code class="language-yaml"># CBS 설정 for Video Stream TC7
+- ? "/ietf-interfaces:interfaces/interface[name='11']/
+     ieee802-dot1q-bridge:bridge-port/
+     ieee802-dot1q-sched:traffic-class-table[traffic-class='7']"
+  : 
+    transmission-selection-algorithm:
+      credit-based-shaper:
+        idle-slope: 20000000    # 20 Mbps
+        send-slope: -980000000  # -980 Mbps
+        hi-credit: 243
+        lo-credit: -243</code></pre>
+                </div>
+                
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Video Stream Transmission</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code class="language-bash">#!/bin/bash
+# H.264 영상 스트림 전송
+cvlc --loop video.mp4 \
+  --sout "#transcode{vcodec=h264,vb=15000}:\
+  duplicate{
+    dst=std{access=udp{ttl=16,mtu=1400},mux=ts,dst=10.0.100.2:5005},
+    dst=std{access=udp{ttl=16,mtu=1400},mux=ts,dst=10.0.100.3:5005}
+  }"</code></pre>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Results Section -->
+        <section id="results" class="content-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">실험 결과</h2>
+                    <p class="section-subtitle">CBS 활성화 전후 성능 비교</p>
+                </div>
+                
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <canvas id="throughputChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="lossChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="jitterChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="latencyChart"></canvas>
+                    </div>
+                </div>
+                
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>성능 지표</th>
+                            <th>CBS 비활성화</th>
+                            <th>CBS 활성화</th>
+                            <th>개선율</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>평균 처리량 (Mbps)</td>
+                            <td>8.1</td>
+                            <td>14.75</td>
+                            <td class="improvement">+82.1%</td>
+                        </tr>
+                        <tr>
+                            <td>프레임 손실률 (%)</td>
+                            <td>21.5</td>
+                            <td>0.67</td>
+                            <td class="improvement">-96.9%</td>
+                        </tr>
+                        <tr>
+                            <td>평균 지터 (ms)</td>
+                            <td>42.3</td>
+                            <td>3.1</td>
+                            <td class="improvement">-92.7%</td>
+                        </tr>
+                        <tr>
+                            <td>평균 지연 (ms)</td>
+                            <td>68.4</td>
+                            <td>8.3</td>
+                            <td class="improvement">-87.9%</td>
+                        </tr>
+                        <tr>
+                            <td>PSNR (dB)</td>
+                            <td>28.3</td>
+                            <td>42.1</td>
+                            <td class="improvement">+48.8%</td>
+                        </tr>
+                        <tr>
+                            <td>MOS (1-5)</td>
+                            <td>2.0</td>
+                            <td>4.8</td>
+                            <td class="improvement">+140%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        
+        <!-- Timeline Section -->
+        <section class="content-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">연구 진행 과정</h2>
+                    <p class="section-subtitle">프로젝트 타임라인</p>
+                </div>
+                
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-item-content">
+                            <h3>1단계: 환경 구축</h3>
+                            <p>LAN9692 보드 셋업 및 네트워크 토폴로지 구성</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-item-content">
+                            <h3>2단계: CBS 구현</h3>
+                            <p>YANG 모델 기반 CBS 파라미터 설정 및 검증</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-item-content">
+                            <h3>3단계: 실험 수행</h3>
+                            <p>다양한 트래픽 부하 조건에서 성능 측정</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-item-content">
+                            <h3>4단계: 분석 및 최적화</h3>
+                            <p>결과 분석 및 파라미터 최적화 가이드라인 도출</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- CTA Section -->
+        <section class="cta">
+            <div class="container">
+                <h2>연구 자료 다운로드</h2>
+                <p>전체 논문과 실험 데이터를 확인하세요</p>
+                <div class="cta-buttons">
+                    <a href="paper_complete.tex" class="btn btn-primary" download>
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                        논문 다운로드 (LaTeX)
+                    </a>
+                    <a href="https://github.com/hwkim3330/research_paper" class="btn btn-secondary" target="_blank">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                        GitHub Repository
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>연구팀</h3>
+                    <ul>
+                        <li>김현우 - CBS 구현</li>
+                        <li>송현수 - 네트워크 분석</li>
+                        <li>안종화 - 영상 처리</li>
+                        <li>박부식 - 프로젝트 총괄</li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>기술 스택</h3>
+                    <ul>
+                        <li>Microchip LAN9692</li>
+                        <li>VelocityDRIVE-SP</li>
+                        <li>IEEE 802.1Qav</li>
+                        <li>YANG/CoAP</li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>연락처</h3>
+                    <ul>
+                        <li><a href="mailto:tsn-team@keti.re.kr">tsn-team@keti.re.kr</a></li>
+                        <li><a href="https://github.com/hwkim3330/research_paper">GitHub</a></li>
+                        <li><a href="https://github.com/hwkim3330/research_paper/issues">Issues</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>참고 자료</h3>
+                    <ul>
+                        <li><a href="https://1.ieee802.org/tsn/">IEEE 802.1 TSN</a></li>
+                        <li><a href="https://www.microchip.com">Microchip</a></li>
+                        <li><a href="README.md">README.md</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 TSN Research Team. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Copy Code Function
+        function copyCode(button) {
+            const codeBlock = button.parentElement.nextElementSibling;
+            const code = codeBlock.textContent;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            });
+        }
+        
+        // Chart.js Configuration
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            }
+        };
+        
+        // Credit Dynamics Chart
+        const creditCtx = document.getElementById('creditChart').getContext('2d');
+        new Chart(creditCtx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 100}, (_, i) => i),
+                datasets: [{
+                    label: 'Credit Value',
+                    data: Array.from({length: 100}, (_, i) => {
+                        const phase = i % 20;
+                        if (phase < 10) return phase * 24.3; // Idle (increasing)
+                        return 243 - (phase - 10) * 48.6; // Transmitting (decreasing)
+                    }),
+                    borderColor: '#2563eb',
+                    backgroundColor: '#2563eb20',
+                    fill: true,
+                    tension: 0
+                }, {
+                    label: 'Transmit Enable Threshold',
+                    data: Array(100).fill(0),
+                    borderColor: '#10b981',
+                    borderDash: [5, 5],
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                ...chartOptions,
+                plugins: {
+                    ...chartOptions.plugins,
+                    title: {
+                        display: true,
+                        text: 'CBS 크레딧 동역학'
+                    }
+                },
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Credit (bits)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time (ms)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Throughput Chart
+        const throughputCtx = document.getElementById('throughputChart').getContext('2d');
+        new Chart(throughputCtx, {
+            type: 'line',
+            data: {
+                labels: [0, 100, 200, 400, 600, 800],
+                datasets: [{
+                    label: 'CBS OFF',
+                    data: [15, 14.8, 14.2, 12.1, 9.3, 8.3],
+                    borderColor: '#ef4444',
+                    backgroundColor: '#ef444420',
+                    tension: 0.3
+                }, {
+                    label: 'CBS ON',
+                    data: [15, 15, 14.9, 14.9, 14.8, 14.8],
+                    borderColor: '#10b981',
+                    backgroundColor: '#10b98120',
+                    tension: 0.3
+                }]
+            },
+            options: {
+                ...chartOptions,
+                plugins: {
+                    ...chartOptions.plugins,
+                    title: {
+                        display: true,
+                        text: 'BE 트래픽 부하에 따른 영상 스트림 처리량'
+                    }
+                },
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Throughput (Mbps)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'BE Traffic Load (Mbps)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Frame Loss Chart
+        const lossCtx = document.getElementById('lossChart').getContext('2d');
+        new Chart(lossCtx, {
+            type: 'bar',
+            data: {
+                labels: ['CBS OFF', 'CBS ON'],
+                datasets: [{
+                    label: 'Frame Loss Rate (%)',
+                    data: [21.5, 0.67],
+                    backgroundColor: ['#ef4444', '#10b981']
+                }]
+            },
+            options: {
+                ...chartOptions,
+                plugins: {
+                    ...chartOptions.plugins,
+                    title: {
+                        display: true,
+                        text: '프레임 손실률 비교'
+                    }
+                },
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Frame Loss (%)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Jitter Chart
+        const jitterCtx = document.getElementById('jitterChart').getContext('2d');
+        new Chart(jitterCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'CBS OFF',
+                    data: Array.from({length: 50}, () => ({
+                        x: Math.random() * 60,
+                        y: 42.3 + (Math.random() - 0.5) * 30
+                    })),
+                    backgroundColor: '#ef444480'
+                }, {
+                    label: 'CBS ON',
+                    data: Array.from({length: 50}, () => ({
+                        x: Math.random() * 60,
+                        y: 3.1 + (Math.random() - 0.5) * 2
+                    })),
+                    backgroundColor: '#10b98180'
+                }]
+            },
+            options: {
+                ...chartOptions,
+                plugins: {
+                    ...chartOptions.plugins,
+                    title: {
+                        display: true,
+                        text: '지터 분포'
+                    }
+                },
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Jitter (ms)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time (s)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Latency Chart
+        const latencyCtx = document.getElementById('latencyChart').getContext('2d');
+        new Chart(latencyCtx, {
+            type: 'radar',
+            data: {
+                labels: ['평균 지연', '최대 지연', '지터', 'PSNR', 'MOS'],
+                datasets: [{
+                    label: 'CBS OFF',
+                    data: [68.4, 185.2, 42.3, 28.3, 40],
+                    borderColor: '#ef4444',
+                    backgroundColor: '#ef444420'
+                }, {
+                    label: 'CBS ON',
+                    data: [8.3, 12.5, 3.1, 42.1, 96],
+                    borderColor: '#10b981',
+                    backgroundColor: '#10b98120'
+                }]
+            },
+            options: {
+                ...chartOptions,
+                plugins: {
+                    ...chartOptions.plugins,
+                    title: {
+                        display: true,
+                        text: '종합 성능 지표'
+                    }
+                }
+            }
+        });
+        
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-in');
+                }
+            });
+        }, observerOptions);
+        
+        document.querySelectorAll('.stat-card, .feature-card, .timeline-item').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
