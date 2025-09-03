@@ -1,0 +1,55 @@
+name: PDF Generation
+
+on:
+  push:
+    paths:
+      - '*.tex'
+      - 'paper_*.tex'
+  pull_request:
+    paths:
+      - '*.tex'
+      - 'paper_*.tex'
+  release:
+    types: [created]
+
+jobs:
+  compile-papers:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install LaTeX
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y texlive-full
+    
+    - name: Create PDF directory
+      run: mkdir -p pdf
+    
+    - name: Compile English paper
+      run: |
+        pdflatex -output-directory=pdf -interaction=nonstopmode paper_english_final.tex
+        pdflatex -output-directory=pdf -interaction=nonstopmode paper_english_final.tex
+    
+    - name: Compile Korean paper  
+      run: |
+        pdflatex -output-directory=pdf -interaction=nonstopmode paper_korean_final.tex
+        pdflatex -output-directory=pdf -interaction=nonstopmode paper_korean_final.tex
+    
+    - name: Upload PDF artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: research-papers
+        path: pdf/*.pdf
+    
+    - name: Upload to release
+      if: github.event_name == 'release'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: pdf/paper_english_final.pdf
+        asset_name: paper_english_final.pdf
+        asset_content_type: application/pdf
