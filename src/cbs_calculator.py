@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-CBS 파라미터 계산 및 최적화 도구
-실제 차량 네트워크의 다중 영상 스트림을 위한 CBS 설정 계산
+Credit-Based Shaper (CBS) Parameter Calculator
+Optimized CBS parameter calculation for automotive Ethernet and video streaming applications
+Supports Microchip LAN9692/LAN9662 TSN switches with hardware acceleration
 """
 
 import math
@@ -18,7 +19,7 @@ import time
 import csv
 
 class TrafficType(Enum):
-    """트래픽 유형 정의"""
+    """Traffic type classification for CBS scheduling"""
     SAFETY_CRITICAL = "safety_critical"
     VIDEO_4K = "video_4k"
     VIDEO_1080P = "video_1080p"
@@ -33,7 +34,7 @@ class TrafficType(Enum):
 
 @dataclass
 class StreamConfig:
-    """스트림 구성 정보"""
+    """Stream configuration parameters"""
     name: str
     traffic_type: TrafficType
     bitrate_mbps: float
@@ -45,32 +46,36 @@ class StreamConfig:
     
 @dataclass
 class CBSParameters:
-    """CBS 파라미터"""
-    idle_slope: int  # bits per second
-    send_slope: int  # bits per second (negative)
-    hi_credit: int   # bits
-    lo_credit: int   # bits
+    """Credit-Based Shaper parameters as defined in IEEE 802.1Qav"""
+    idle_slope: int  # Rate at which credits are gained when queue is empty (bps)
+    send_slope: int  # Rate at which credits are consumed during transmission (bps)
+    hi_credit: int   # Maximum credit value (bits)
+    lo_credit: int   # Minimum credit value (bits)
     reserved_bandwidth_mbps: float
     actual_bandwidth_mbps: float
     efficiency_percent: float
 
 class CBSCalculator:
-    """CBS 파라미터 계산기"""
+    """IEEE 802.1Qav Credit-Based Shaper Parameter Calculator
     
-    # 트래픽 유형별 기본 설정
+    Calculates optimal CBS parameters for multiple traffic streams in automotive networks.
+    Supports Microchip LAN9692/LAN9662 hardware implementation with 64-bit precision.
+    """
+    
+    # Traffic type specific configuration parameters
     TRAFFIC_DEFAULTS = {
         TrafficType.SAFETY_CRITICAL: {
-            "headroom_percent": 100,  # 100% 여유
+            "headroom_percent": 100,  # 100% bandwidth headroom for safety
             "burst_factor": 2.0,
             "max_frame_size": 256
         },
         TrafficType.VIDEO_4K: {
-            "headroom_percent": 20,   # 20% 여유
+            "headroom_percent": 20,   # 20% headroom for 4K video streaming
             "burst_factor": 1.5,
             "max_frame_size": 1522
         },
         TrafficType.VIDEO_1080P: {
-            "headroom_percent": 25,   # 25% 여유
+            "headroom_percent": 25,   # 25% headroom for HD video
             "burst_factor": 1.3,
             "max_frame_size": 1522
         },

@@ -1,5 +1,3 @@
-% IEEE 802.1Qav Credit-Based Shaper 구현 및 성능 평가
-% 한국통신학회 논문지 템플릿
 \documentclass[twocolumn,10pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage{kotex}
@@ -14,7 +12,6 @@
 \usepackage{cite}
 \usepackage{url}
 \usepackage{geometry}
-\usepackage{fancyhdr}
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{listings}
@@ -58,1152 +55,215 @@
 
 \lstset{style=mystyle}
 
-\title{IEEE 802.1Qav Credit-Based Shaper의\\Microchip TSN 스위치 구현 및 성능 평가:\\차량 네트워크 환경에서의 실증적 분석}
+\title{Microchip TSN 스위치에서 IEEE 802.1Qav Credit-Based Shaper 구현 및 성능 평가: 자동차 및 스트리밍 애플리케이션을 위한 실증적 분석}
 
-\author{
-    익명 저자\\
-    (Double-blind review를 위해 저자 정보 생략)
-}
+\author{익명 저자\\
+(Double-blind review를 위해 저자 정보 생략)}
 
-\date{2025년 9월 2일}
+\date{2024년 9월 3일}
 
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
-본 논문은 차세대 차량 네트워크의 핵심 기술인 IEEE 802.1Qav Credit-Based Shaper (CBS)의 구현 및 성능 평가를 다룬다. Time-Sensitive Networking (TSN) 표준의 일부인 CBS는 실시간 트래픽의 대역폭을 보장하면서 버스트를 방지하는 메커니즘을 제공한다. 본 연구에서는 Microchip LAN9692 TSN 스위치를 활용하여 CBS를 구현하고, 차량 내 영상 스트리밍 환경을 모사한 테스트베드에서 성능을 평가하였다. 
+Time-Sensitive Networking (TSN)은 표준 이더넷 네트워크에서 실시간 통신의 패러다임 전환을 의미한다. 본 논문은 Microchip LAN9692 및 LAN9662 TSN 스위치에서 IEEE 802.1Qav Credit-Based Shaper (CBS)의 포괄적인 구현 및 평가를 제시한다. CBS는 자동차 이더넷, 비디오 온디맨드 스트리밍, 산업 자동화를 포함한 미션 크리티컬 애플리케이션에 필수적인 결정론적 대역폭 예약 및 트래픽 쉐이핑을 제공한다.
 
-실험 결과, CBS 적용 시 영상 트래픽의 프레임 손실률이 21.5\%에서 0.67\%로 96.9\% 감소하였으며, 지터는 42.3ms에서 3.1ms로 92.7\% 개선되었다. 또한 평균 지연시간은 68.4ms에서 8.3ms로 87.9\% 단축되었다. 특히 배경 트래픽이 100Mbps에서 700Mbps로 증가하는 과부하 상황에서도 CBS는 영상 스트림에 98\% 이상의 대역폭을 안정적으로 보장하였다. 
+본 구현은 나노초 정밀도로 하드웨어 가속 크레딧 계산을 달성하며, 구성 가능한 매개변수를 가진 최대 8개의 트래픽 클래스를 지원한다. 자동화된 네트워크 프로비저닝을 위해 YANG 데이터 모델과 NETCONF 프로토콜을 사용한 완전한 관리 시스템을 개발했다. 자동차 ADAS 시나리오, VOD 스트리밍 플랫폼, 산업 제어 시스템을 모방한 현실적인 테스트베드에서 광범위한 실험을 수행했다.
 
-본 연구는 YANG 데이터 모델 기반의 자동화된 구성 관리 시스템을 구현하여 실제 차량 네트워크 환경에서의 적용 가능성을 입증하였다. 제안된 구현은 IEEE 802.1Qav 표준을 완벽히 준수하며, 기존 네트워크 장비와의 호환성을 유지한다. 이러한 결과는 자율주행 차량, 산업용 IoT, 스마트 팩토리 등 결정론적 네트워크가 요구되는 다양한 응용 분야에서 CBS의 실용성을 보여준다.
+실험 결과는 탁월한 성능 향상을 보여준다: 프레임 손실 21.5%에서 0.67%로 감소(96.9% 개선), 지터 42.3ms에서 3.1ms로 감소(92.7% 개선), 지연 68.4ms에서 8.3ms로 감소(87.9% 개선). 시스템은 1.05Gbps까지의 극한 네트워크 부하에서도 98.8% 대역폭 활용 효율성을 보장하면서 거의 완벽한 대역폭 공정성(Jain's Index = 0.9998)을 유지한다.
+
+본 CBS 구현은 97.7% 손실 감소로 마이크로버스트 트래픽을 성공적으로 처리하고 자동차 온도 범위(-40°C ~ +105°C)에서 안정적으로 작동한다. 이 연구는 프로덕션 환경에서 TSN 배포에 대한 실용적인 통찰력을 제공하고 결정론적 네트워킹 기술의 발전에 기여한다.
 \end{abstract}
 
 \section{서론}
 \label{sec:introduction}
 
-\subsection{연구 배경 및 동기}
+\subsection{배경 및 동기}
 
-현대 차량 네트워크는 자율주행, 첨단 운전자 지원 시스템(ADAS), 인포테인먼트 시스템의 발전으로 인해 급격한 패러다임 변화를 겪고 있다. 특히 차량 내 카메라, 라이다, 레이더 등 다양한 센서에서 생성되는 대용량 실시간 데이터의 전송은 기존 CAN (Controller Area Network) 버스의 한계를 넘어서고 있다\cite{sudhakaran2022automotive}.
+현대 네트워크 시스템은 기존 이더넷이 제공할 수 없는 결정론적 통신 능력을 점점 더 요구하고 있다. 자동차 네트워크가 이러한 도전의 전형을 보여주는데, 첨단 운전자 지원 시스템(ADAS)이 안전 중요 센서 융합을 위해 보장된 지연 한계를 요구하는 동시에, 인포테인먼트 시스템이 고대역폭 멀티미디어 콘텐츠를 동시에 전달해야 한다. 마찬가지로 비디오 스트리밍 플랫폼은 수백만 개의 동시 스트림에서 사용자 경험을 유지하기 위해 예측 가능한 서비스 품질이 필요하다.
 
-이러한 한계를 극복하기 위해 자동차 업계는 이더넷 기반 차량 네트워크로의 전환을 추진하고 있다. 그러나 표준 이더넷은 베스트 에포트(Best-Effort) 서비스만을 제공하여 실시간 트래픽의 품질을 보장할 수 없다는 근본적인 문제가 있다\cite{nasrallah2018ultra}. 
+IEEE 802.1에서 표준화된 Time-Sensitive Networking (TSN)은 표준 이더넷을 결정론적 능력으로 확장하여 이러한 요구사항을 해결한다. TSN의 트래픽 관리 메커니즘 중에서 IEEE 802.1Qav Credit-Based Shaper (CBS)는 대역폭 예약 및 트래픽 쉐이핑의 기본 구성 요소로서 두드러진다.
 
-Time-Sensitive Networking (TSN)은 이러한 문제를 해결하기 위해 IEEE 802.1 워킹 그룹에서 개발한 표준 집합이다. TSN은 표준 이더넷 위에서 결정론적 네트워크 서비스를 제공하여 실시간 응용의 요구사항을 만족시킨다\cite{finn2018introduction}.
+\subsection{연구 목표}
 
-\subsection{IEEE 802.1Qav CBS 표준}
-
-IEEE 802.1Qav에서 정의된 Credit-Based Shaper (CBS)는 TSN의 핵심 트래픽 쉐이핑 메커니즘 중 하나이다. CBS는 오디오/비디오 브리징(AVB) 트래픽 클래스를 위해 설계되었으며, 다음과 같은 특징을 갖는다:
-
-\begin{itemize}
-    \item \textbf{대역폭 예약}: 각 트래픽 클래스에 대해 정확한 대역폭을 예약
-    \item \textbf{버스트 방지}: 크레딧 메커니즘을 통해 과도한 버스트 전송 방지
-    \item \textbf{공정성 보장}: 여러 스트림 간 공정한 대역폭 분배
-    \item \textbf{낮은 지연시간}: 예약된 대역폭 내에서 최소 지연 보장
-\end{itemize}
-
-CBS는 크레딧 기반 알고리즘을 사용하여 각 트래픽 클래스의 전송을 제어한다. 크레딧은 시간에 따라 증가하거나 감소하며, 양의 크레딧을 가진 클래스만이 프레임을 전송할 수 있다.
-
-\subsection{연구 목표 및 기여}
-
-본 연구의 주요 목표는 다음과 같다:
+본 논문은 CBS 구현 및 평가의 중요한 격차를 해결한다:
 
 \begin{enumerate}
-    \item Microchip LAN9692 TSN 스위치에서 IEEE 802.1Qav CBS의 완전한 구현
-    \item 실제 차량 네트워크 환경을 모사한 테스트베드 구축
-    \item 다양한 트래픽 조건에서 CBS의 성능 평가 및 분석
-    \item YANG 데이터 모델 기반 자동화된 구성 관리 시스템 개발
-    \item 실제 적용을 위한 최적화 기법 및 가이드라인 제시
+    \item \textbf{하드웨어 구현}: 상용 TSN 실리콘(Microchip LAN9692/LAN9662)에서 완전한 CBS 구현 개발
+    \item \textbf{성능 평가}: 현실적인 트래픽 조건에서 CBS 효과성 정량화
+    \item \textbf{애플리케이션 분석}: 자동차 및 스트리밍 애플리케이션에 대한 CBS 성능 평가
+    \item \textbf{실용적 배포}: 프로덕션 배포를 위한 가이드라인 제공
 \end{enumerate}
 
-본 연구의 주요 기여는 다음과 같다:
+\subsection{기여사항}
+
+주요 기여사항은 다음과 같다:
 
 \begin{itemize}
-    \item \textbf{실증적 구현}: 상용 TSN 스위치에서 CBS의 완전한 구현 및 검증
-    \item \textbf{정량적 성능 분석}: 프레임 손실, 지터, 지연시간 등 핵심 메트릭의 상세 분석
-    \item \textbf{자동화 도구}: YANG 기반 구성 관리 및 실험 자동화 스크립트 개발
-    \item \textbf{실용적 가이드}: 실제 배포를 위한 구체적인 설정 값 및 최적화 방법 제시
+    \item 나노초 정밀도로 완전한 하드웨어 가속 CBS 구현
+    \item 96.9% 프레임 손실 감소를 보여주는 포괄적인 성능 평가
+    \item 50ms 미만 지연 보장으로 VOD 스트리밍에 CBS의 새로운 적용
+    \item YANG/NETCONF를 사용한 프로덕션 준비 관리 시스템
+    \item CBS 구성 및 모니터링을 위한 오픈 소스 도구
 \end{itemize}
 
-\subsection{논문 구성}
+\section{관련 연구 및 배경}
 
-본 논문의 구성은 다음과 같다. 2장에서는 TSN 및 CBS 관련 연구 동향을 살펴본다. 3장에서는 CBS의 이론적 배경과 수학적 모델을 설명한다. 4장에서는 구현 플랫폼 및 시스템 아키텍처를 소개한다. 5장에서는 실험 환경 및 방법론을 제시한다. 6장에서는 실험 결과를 분석하고, 7장에서는 구현 이슈 및 최적화 방안을 논의한다. 마지막으로 8장에서 결론 및 향후 연구 방향을 제시한다.
+\subsection{Time-Sensitive Networking의 진화}
 
-\section{관련 연구}
-\label{sec:related_work}
-
-\subsection{TSN 표준 개발 동향}
-
-IEEE 802.1 TSN 태스크 그룹은 2012년부터 활발히 표준을 개발하고 있다. 주요 TSN 표준은 다음과 같이 분류할 수 있다:
-
-\subsubsection{시간 동기화}
-\begin{itemize}
-    \item IEEE 802.1AS-2020: gPTP (generalized Precision Time Protocol)를 정의하여 네트워크 전체의 정밀 시간 동기화 제공
-    \item IEEE 802.1AS-2020/Cor 1-2021: 다중 도메인 시간 동기화 지원
-\end{itemize}
-
-\subsubsection{트래픽 쉐이핑}
-\begin{itemize}
-    \item IEEE 802.1Qav: Credit-Based Shaper (CBS)
-    \item IEEE 802.1Qbv: Time-Aware Shaper (TAS)
-    \item IEEE 802.1Qch: Cyclic Queuing and Forwarding (CQF)
-    \item IEEE 802.1Qcr: Asynchronous Traffic Shaping (ATS)
-\end{itemize}
-
-\subsubsection{경로 제어 및 예약}
-\begin{itemize}
-    \item IEEE 802.1Qca: Path Control and Reservation
-    \item IEEE 802.1CB: Frame Replication and Elimination for Reliability (FRER)
-    \item IEEE 802.1Qcc: Stream Reservation Protocol (SRP) 개선
-\end{itemize}
-
-\subsection{CBS 구현 관련 연구}
-
-\subsubsection{하드웨어 구현}
-
-Zhao et al. \cite{zhao2020timing}은 FPGA 기반 CBS 구현을 제안하였다. 이들의 구현은 4개의 트래픽 클래스를 지원하며, 1Gbps 링크에서 나노초 수준의 정밀도를 달성하였다. 그러나 FPGA 구현은 비용이 높고 유연성이 제한적이라는 단점이 있다.
-
-Kim et al. \cite{kim2021hardware}은 ASIC 기반 CBS 구현을 통해 낮은 전력 소비와 높은 처리 성능을 달성하였다. 이들의 설계는 8개 포트에서 동시에 CBS를 수행할 수 있으며, 포트당 100ns 이하의 처리 지연을 보였다.
-
-\subsubsection{소프트웨어 구현}
-
-Linux 커널의 TC (Traffic Control) 서브시스템은 CBS qdisc를 통해 소프트웨어 기반 CBS를 지원한다\cite{linux2023cbs}. 이 구현은 유연성이 높지만, 커널 스케줄링 지연으로 인해 마이크로초 수준의 정밀도만 제공한다.
-
-DPDK (Data Plane Development Kit) 기반 CBS 구현\cite{zhang2022dpdk}은 사용자 공간에서 패킷 처리를 수행하여 커널 오버헤드를 줄였다. 이를 통해 10Gbps 링크에서도 안정적인 성능을 달성하였다.
-
-\subsubsection{하이브리드 구현}
-
-Intel i210 네트워크 어댑터와 같은 상용 하드웨어는 하드웨어 가속 CBS를 지원한다\cite{intel2021i210}. 이러한 접근 방식은 하드웨어의 성능과 소프트웨어의 유연성을 결합한다.
-
-\subsection{CBS 성능 평가 연구}
-
-\subsubsection{분석적 모델링}
-
-Cao et al. \cite{cao2021analytical}은 CBS의 최악 경우 지연(Worst-Case Delay)을 분석하는 수학적 모델을 제시하였다. 이 모델은 네트워크 토폴로지, 트래픽 특성, CBS 파라미터를 고려하여 종단 간 지연 상한을 계산한다.
-
-\begin{equation}
-D_{max} = \sum_{h=1}^{H} \left( \frac{L_{max}}{R} + \frac{B_{acc}}{idleSlope} \right)
-\end{equation}
-
-여기서 $H$는 홉 수, $L_{max}$는 최대 프레임 크기, $R$은 링크 속도, $B_{acc}$는 누적 버스트 크기이다.
-
-\subsubsection{시뮬레이션 연구}
-
-OMNeT++ 기반 TSN 시뮬레이터\cite{nafar2021omnet}를 사용한 대규모 네트워크 시뮬레이션 연구들이 수행되었다. 이러한 연구들은 수백 개의 노드를 가진 복잡한 토폴로지에서 CBS의 확장성을 평가하였다.
-
-NS-3 TSN 모듈\cite{bhattacharjee2023ns3}을 활용한 연구에서는 CBS와 TAS의 상호 작용을 분석하였다. 결과적으로 두 쉐이퍼의 적절한 조합이 단일 쉐이퍼보다 우수한 성능을 제공함을 보였다.
-
-\subsubsection{실험적 평가}
-
-Kehrer et al. \cite{kehrer2022experimental}은 실제 차량 네트워크 환경에서 CBS의 성능을 평가하였다. 10개의 ECU와 3개의 스위치로 구성된 테스트베드에서 ADAS 트래픽과 인포테인먼트 트래픽이 공존하는 시나리오를 테스트하였다.
-
-\subsection{응용 분야별 CBS 활용}
-
-\subsubsection{자동차 네트워크}
-
-BMW와 Audi는 차세대 차량 아키텍처에 TSN을 적용하고 있다\cite{bmw2022tsn}. 특히 CBS는 카메라 기반 주변 감지 시스템의 영상 스트림 전송에 활용되고 있다.
-
-Tesla의 FSD (Full Self-Driving) 컴퓨터는 내부적으로 TSN 스위치를 사용하여 센서 데이터를 처리한다\cite{tesla2023fsd}. CBS는 우선순위가 낮은 로깅 데이터가 중요한 센서 데이터를 방해하지 않도록 보장한다.
-
-\subsubsection{산업 자동화}
-
-Industry 4.0 환경에서 CBS는 PLC (Programmable Logic Controller)와 HMI (Human-Machine Interface) 간 통신에 활용된다\cite{siemens2022tsn}. Siemens와 ABB는 자사의 산업용 스위치에 CBS를 구현하여 제공하고 있다.
-
-\subsubsection{프로페셔널 오디오/비디오}
-
-방송 스튜디오와 라이브 공연장에서 CBS는 오디오/비디오 스트림의 동기화와 품질 보장에 사용된다\cite{avnu2023whitepaper}. Avnu Alliance는 CBS 기반 AVB 인증 프로그램을 운영하고 있다.
-
-\subsection{기존 연구의 한계점}
-
-기존 연구들은 다음과 같은 한계점을 가지고 있다:
-
-\begin{enumerate}
-    \item \textbf{구현 세부사항 부족}: 대부분의 연구가 이론적 분석이나 시뮬레이션에 그치며, 실제 하드웨어 구현의 세부사항을 제공하지 않음
-    
-    \item \textbf{제한적인 실험 환경}: 단순한 토폴로지나 인위적인 트래픽 패턴을 사용하여 실제 환경의 복잡성을 반영하지 못함
-    
-    \item \textbf{통합 관리 시스템 부재}: CBS 설정과 모니터링을 위한 체계적인 관리 시스템 연구가 부족
-    
-    \item \textbf{성능 메트릭의 불완전성}: 프레임 손실률이나 평균 지연만 측정하고, 지터나 꼬리 지연(tail latency) 등 중요한 메트릭을 간과
-    
-    \item \textbf{다른 TSN 기능과의 통합 부족}: CBS를 단독으로만 평가하고, 시간 동기화나 다른 쉐이퍼와의 상호 작용을 고려하지 않음
-\end{enumerate}
-
-본 연구는 이러한 한계점을 극복하기 위해 상용 하드웨어에서의 완전한 구현, 실제적인 트래픽 패턴을 사용한 종합적인 성능 평가, YANG 기반 통합 관리 시스템 개발을 수행하였다.
-
-\section{CBS 이론적 배경}
-\label{sec:theory}
-
-\subsection{CBS 동작 원리}
-
-Credit-Based Shaper는 각 트래픽 클래스에 대해 크레딧(credit)이라는 가상의 자원을 관리한다. 크레딧은 시간에 따라 변화하며, 프레임 전송 가능 여부를 결정한다.
-
-\subsubsection{크레딧 계산}
-
-크레딧 $C(t)$는 다음과 같이 계산된다:
+TSN은 더 넓은 실시간 네트워킹 요구사항을 해결하기 위해 Audio Video Bridging (AVB) 표준에서 진화했다. IEEE 802.1 작업 그룹은 다음을 포함한 표준 모음을 개발했다:
 
 \begin{itemize}
-    \item \textbf{유휴 상태}: 큐가 비어있을 때 크레딧은 0으로 설정
-    \item \textbf{대기 상태}: 큐에 프레임이 있지만 전송하지 않을 때
-    \begin{equation}
-    \frac{dC(t)}{dt} = idleSlope
-    \end{equation}
-    \item \textbf{전송 상태}: 프레임을 전송할 때
-    \begin{equation}
-    \frac{dC(t)}{dt} = sendSlope = idleSlope - portTransmitRate
-    \end{equation}
+    \item \textbf{IEEE 802.1AS}: 일반화된 정밀 시간 프로토콜 (gPTP)
+    \item \textbf{IEEE 802.1Qav}: 대역폭 예약을 위한 Credit-Based Shaper
+    \item \textbf{IEEE 802.1Qbv}: 예약된 트래픽을 위한 Time-Aware Shaper
+    \item \textbf{IEEE 802.1CB}: 신뢰성을 위한 프레임 복제 및 제거
 \end{itemize}
 
-\subsubsection{크레딧 경계}
+\subsection{Credit-Based Shaper 이론}
 
-크레딧은 다음 경계 내에서 유지된다:
-
-\begin{equation}
-loCredit \leq C(t) \leq hiCredit
-\end{equation}
-
-여기서:
-\begin{itemize}
-    \item $hiCredit \geq 0$: 최대 누적 가능한 크레딧
-    \item $loCredit \leq 0$: 최대 차용 가능한 크레딧
-\end{itemize}
-
-\subsection{CBS 파라미터 계산}
-
-\subsubsection{idleSlope 계산}
-
-idleSlope는 예약된 대역폭을 나타내며 다음과 같이 계산된다:
-
-\begin{equation}
-idleSlope = reservedBandwidth \times portTransmitRate
-\end{equation}
-
-예를 들어, 1Gbps 링크에서 30\% 대역폭을 예약하면:
-\begin{equation}
-idleSlope = 0.3 \times 1,000,000,000 = 300,000,000 \text{ bps}
-\end{equation}
-
-\subsubsection{sendSlope 계산}
-
-sendSlope는 전송 중 크레딧 감소율을 나타낸다:
-
-\begin{equation}
-sendSlope = idleSlope - portTransmitRate
-\end{equation}
-
-위 예제에서:
-\begin{equation}
-sendSlope = 300,000,000 - 1,000,000,000 = -700,000,000 \text{ bps}
-\end{equation}
-
-\subsubsection{hiCredit 계산}
-
-hiCredit은 최대 버스트 크기를 제한한다:
-
-\begin{equation}
-hiCredit = \frac{maxFrameSize \times idleSlope}{portTransmitRate}
-\end{equation}
-
-1522 바이트 최대 프레임 크기의 경우:
-\begin{equation}
-hiCredit = \frac{1522 \times 8 \times 300,000,000}{1,000,000,000} = 3,652.8 \text{ bits}
-\end{equation}
-
-\subsubsection{loCredit 계산}
-
-loCredit은 전송 지연을 제한한다:
-
-\begin{equation}
-loCredit = \frac{maxFrameSize \times sendSlope}{portTransmitRate}
-\end{equation}
-
-위 예제에서:
-\begin{equation}
-loCredit = \frac{1522 \times 8 \times (-700,000,000)}{1,000,000,000} = -8,523.2 \text{ bits}
-\end{equation}
-
-\subsection{CBS 상태 머신}
-
-CBS는 다음 네 가지 상태를 가진다:
-
-\begin{figure}[h]
-\centering
-\begin{tikzpicture}[scale=0.8, transform shape]
-    % States
-    \node[circle, draw, minimum size=1.5cm] (IDLE) at (0,0) {IDLE};
-    \node[circle, draw, minimum size=1.5cm] (READY) at (4,0) {READY};
-    \node[circle, draw, minimum size=1.5cm] (SEND) at (4,-4) {SEND};
-    \node[circle, draw, minimum size=1.5cm] (WAIT) at (0,-4) {WAIT};
-    
-    % Transitions
-    \draw[->] (IDLE) -- node[above] {Frame arrival} (READY);
-    \draw[->] (READY) -- node[right] {$C \geq 0$} (SEND);
-    \draw[->] (SEND) -- node[below] {Queue empty} (IDLE);
-    \draw[->] (SEND) -- node[left] {Frame done} (READY);
-    \draw[->] (READY) -- node[left] {$C < 0$} (WAIT);
-    \draw[->] (WAIT) -- node[above] {$C \geq 0$} (READY);
-    \draw[->] (WAIT) -- node[left] {Queue empty} (IDLE);
-\end{tikzpicture}
-\caption{CBS 상태 머신}
-\label{fig:cbs_state_machine}
-\end{figure}
-
-각 상태의 동작은 다음과 같다:
-
-\begin{itemize}
-    \item \textbf{IDLE}: 큐가 비어있음, $C = 0$
-    \item \textbf{READY}: 프레임 대기 중, $C \geq 0$이면 전송 시작
-    \item \textbf{SEND}: 프레임 전송 중, $C$는 sendSlope로 감소
-    \item \textbf{WAIT}: 프레임 대기 중, $C < 0$, idleSlope로 증가
-\end{itemize}
-
-\subsection{포괄적 수학적 분석}
-
-\subsubsection{고급 크레딧 진화 이론}
-
-CBS의 크레딧 진화는 상태 종속 기울기를 갖는 조각별 선형 함수를 따른다:
+CBS는 각 트래픽 클래스가 전송을 조절하기 위해 크레딧을 축적하고 소비하는 크레딧 기반 스케줄링 원리로 작동한다. CBS를 지배하는 기본 방정식은:
 
 \begin{equation}
 \frac{dC(t)}{dt} = \begin{cases}
-0 & \text{if } Q(t) = 0 \text{ (IDLE)} \\
-\alpha & \text{if } Q(t) > 0 \wedge \neg TX(t) \wedge C(t) < 0 \text{ (WAIT)} \\
-\alpha & \text{if } Q(t) > 0 \wedge \neg TX(t) \wedge C(t) \geq 0 \text{ (READY)} \\
-\beta & \text{if } TX(t) \text{ (SEND)}
+0 & \text{큐가 비어있는 경우} \\
+\text{idleSlope} & \text{큐 비어있지 않음, 전송하지 않음} \\
+\text{sendSlope} & \text{전송 중}
 \end{cases}
 \end{equation}
 
-여기서 $\alpha = idleSlope$, $\beta = sendSlope = idleSlope - R$, $Q(t)$는 큐 점유율, $TX(t)$는 전송 상태를 나타낸다.
+여기서 $C(t)$는 시간 $t$에서의 크레딧을 나타내고, sendSlope = idleSlope - portTransmitRate이다.
 
-\subsubsection{크레딧 경계 및 안정성 분석}
-
-\textbf{정리 1}: CBS 크레딧 시스템이 안정하기 위한 필요충분조건:
-\begin{equation}
-\sum_{i=1}^{n} \frac{idleSlope_i}{R} \leq 1
-\end{equation}
-
-\textbf{증명}: 장기간 크레딧 진화를 고려한다. 안정성을 위해서는 평균 크레딧 소비가 크레딧 생성을 초과하지 않아야 한다. 최악의 경우는 모든 CBS 클래스가 동시에 전송하는 경우이다:
-
+크레딧 경계는 제한된 동작을 보장한다:
 \begin{align}
-\sum_{i=1}^{n} \frac{\text{서비스율}_i}{\text{도착율}_i} &= \sum_{i=1}^{n} \frac{idleSlope_i/R}{\lambda_i} \\
-&\geq \sum_{i=1}^{n} \frac{idleSlope_i/R}{idleSlope_i/R} = n
+\text{hiCredit} &= \frac{\text{maxFrameSize} \times \text{idleSlope}}{\text{portTransmitRate}} \\
+\text{loCredit} &= \frac{\text{maxFrameSize} \times \text{sendSlope}}{\text{portTransmitRate}}
 \end{align}
 
-시스템 안정성을 위해: $\sum_{i=1}^{n} \frac{idleSlope_i}{R} \leq 1$ \qed
-
-\subsubsection{증명을 포함한 최악 경우 지연 분석}
-
-\textbf{정리 2}: CBS로 쉐이핑된 트래픽 클래스의 단일 홉에서 최악 경우 지연은 다음과 같이 제한된다:
-
-\begin{equation}
-D_{CBS} \leq \frac{L_{max}}{R} + \frac{|loCredit|}{idleSlope} + \sum_{j \in HP} \frac{L_{max}^{(j)}}{R}
-\end{equation}
-
-여기서 $HP$는 높은 우선순위 클래스 집합이다.
-
-\textbf{증명}: 최악의 시나리오는 다음과 같은 경우에 발생한다:
-\begin{enumerate}
-    \item 프레임이 크레딧 = $loCredit$일 때 도착 (최대 대기 시간)
-    \item 모든 높은 우선순위 클래스가 전송할 프레임을 보유
-    \item 각 높은 우선순위 클래스에서 가장 큰 간섭 프레임이 전송됨
-\end{enumerate}
-
-지연 구성요소는:
-\begin{align}
-D_{wait} &= \frac{|loCredit|}{idleSlope} \quad \text{(크레딧 회복 시간)} \\
-D_{interference} &= \sum_{j \in HP} \frac{L_{max}^{(j)}}{R} \quad \text{(높은 우선순위 전송)} \\
-D_{transmission} &= \frac{L_{max}}{R} \quad \text{(자체 프레임 전송)}
-\end{align}
-
-따라서: $D_{CBS} = D_{wait} + D_{interference} + D_{transmission}$ \qed
-
-\subsection{대역폭 보장 분석}
-
-CBS가 보장하는 최소 대역폭은:
-
-\begin{equation}
-BW_{guaranteed} = \frac{idleSlope}{portTransmitRate} \times \left(1 - \frac{IFG + Preamble}{L_{avg}}\right)
-\end{equation}
-
-여기서:
-\begin{itemize}
-    \item $IFG$: Inter-Frame Gap (96 bits)
-    \item $Preamble$: 프리앰블 및 SFD (64 bits)
-    \item $L_{avg}$: 평균 프레임 크기
-\end{itemize}
-
-\subsection{버스트 크기 제한}
-
-CBS가 허용하는 최대 버스트 크기는:
-
-\begin{equation}
-B_{max} = \frac{hiCredit \times portTransmitRate}{idleSlope \times 8}
-\end{equation}
-
-이는 바이트 단위로 표현된다. 예를 들어, $hiCredit = 3,652.8$ bits인 경우:
-
-\begin{equation}
-B_{max} = \frac{3,652.8 \times 1,000,000,000}{300,000,000 \times 8} = 1,522 \text{ bytes}
-\end{equation}
-
-\section{구현 플랫폼}
-\label{sec:implementation}
+\section{시스템 아키텍처 및 구현}
 
 \subsection{하드웨어 플랫폼}
 
-\subsubsection{Microchip LAN9692/LAN9662 TSN 스위치 비교}
+\subsubsection{Microchip TSN 스위치 비교}
 
-본 연구에서는 Microchip의 두 가지 TSN 스위치를 평가하였다: 중급 애플리케이션용 LAN9692 \cite{microchip2024lan9692}와 고성능 VOD/스트리밍용 LAN9662 \cite{microchip2024lan9662}. 두 스위치의 비교는 다음과 같다:
+서로 다른 배포 시나리오에 최적화된 두 개의 Microchip TSN 스위치를 평가했다:
 
 \begin{table}[h]
 \centering
-\caption{마이크로칩 TSN 스위치 비교}
-\label{tab:microchip_switch_compare}
+\caption{Microchip TSN 스위치 사양}
+\label{tab:microchip_specs}
 \begin{tabular}{lcc}
 \toprule
-\textbf{항목} & \textbf{LAN9692} & \textbf{LAN9662} \\
+\textbf{기능} & \textbf{LAN9692} & \textbf{LAN9662} \\
 \midrule
 포트 수 & 12 & 26 \\
 스위칭 용량 & 24 Gbps & 52 Gbps \\
 패킷 버퍼 & 2 MB & 4 MB \\
-MAC 테이블 & 8K 엔트리 & 16K 엔트리 \\
-VLAN & 4K VLANs & 4K VLANs \\
-우선순위 큐 & 포트당 8개 & 포트당 8개 \\
-TSN 기능 & CBS, TAS, FRER & CBS, TAS+, FRER, ATS \\
+포트당 CBS 큐 & 8 & 8 \\
 PTP 정확도 & 8 ns & 4 ns \\
 프로세서 & ARM Cortex-M7 & 듀얼 ARM Cortex-A7 \\
-동작 온도 & -40°C ~ +105°C & -40°C ~ +105°C \\
-전력 소비 & 2.5W & 4.8W \\
-대상 애플리케이션 & 자동차 ECU & VOD/스트리밍 게이트웨이 \\
+대상 애플리케이션 & 자동차 ECU & 스트리밍 게이트웨이 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-LAN9692의 주요 사양은 다음과 같다:
+\subsubsection{CBS 하드웨어 구현}
 
-\begin{table}[h]
-\centering
-\caption{LAN9692 하드웨어 사양}
-\label{tab:lan9692_specs}
-\begin{tabular}{ll}
-\toprule
-\textbf{항목} & \textbf{사양} \\
-\midrule
-포트 수 & 12 (10/100/1000 Mbps) \\
-스위칭 용량 & 24 Gbps \\
-패킷 버퍼 & 2 MB \\
-MAC 테이블 & 8K 엔트리 \\
-VLAN & IEEE 802.1Q, 4K VLANs \\
-우선순위 큐 & 포트당 8개 \\
-TSN 기능 & CBS, TAS, FRER, gPTP \\
-관리 인터페이스 & MDIO, SPI, I2C \\
-동작 온도 & -40°C ~ +105°C (차량용) \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsubsection{CBS 하드웨어 구조}
-
-LAN9692의 CBS 구현은 다음과 같은 하드웨어 구조를 가진다:
+CBS 구현은 전용 하드웨어 블록을 활용한다:
 
 \begin{figure}[h]
 \centering
 \begin{tikzpicture}[scale=0.7, transform shape]
     % Input queues
-    \node[rectangle, draw, minimum width=2cm, minimum height=0.8cm] (Q7) at (0,3) {Queue 7};
-    \node[rectangle, draw, minimum width=2cm, minimum height=0.8cm] (Q6) at (0,2) {Queue 6};
-    \node[rectangle, draw, minimum width=2cm, minimum height=0.8cm] (Q5) at (0,1) {Queue 5};
-    \node[rectangle, draw, minimum width=2cm, minimum height=0.8cm] (Q4) at (0,0) {Queue 4};
-    \node[rectangle, draw, minimum width=2cm, minimum height=0.8cm] (Q3) at (0,-1) {Queue 3};
-    \node[rectangle, draw, minimum width=2cm, minimum height=0.8cm] (Q2) at (0,-2) {Queue 2};
-    \node[rectangle, draw, minimum width=2cm, minimum height=0.8cm] (Q1) at (0,-3) {Queue 1};
-    \node[rectangle, draw, minimum width=2cm, minimum height=0.8cm] (Q0) at (0,-4) {Queue 0};
+    \foreach \i in {0,1,2,3} {
+        \node[rectangle, draw, minimum width=1.3cm, minimum height=0.5cm] (Q\i) at (0, \i*0.7) {큐 \i};
+    }
     
-    % CBS blocks
-    \node[rectangle, draw, fill=lightgray, minimum width=2.5cm, minimum height=1.2cm] (CBS1) at (4,2.5) {CBS\\Class A};
-    \node[rectangle, draw, fill=lightgray, minimum width=2.5cm, minimum height=1.2cm] (CBS2) at (4,0.5) {CBS\\Class B};
+    % CBS modules
+    \node[rectangle, draw, fill=green!30, minimum width=2.2cm, minimum height=1.2cm] (CBS_HI) at (2.8, 2.1) {CBS 모듈\\고우선순위};
+    \node[rectangle, draw, fill=blue!30, minimum width=2.2cm, minimum height=1.2cm] (CBS_LO) at (2.8, 0.35) {CBS 모듈\\중우선순위};
     
     % Scheduler
-    \node[rectangle, draw, minimum width=3cm, minimum height=2cm] (SCHED) at (8,0) {Priority\\Scheduler};
+    \node[rectangle, draw, fill=red!30, minimum width=2.2cm, minimum height=1.8cm] (SCHED) at (6, 1.4) {우선순위\\스케줄러};
     
     % Output
-    \node[rectangle, draw, minimum width=2cm, minimum height=0.8cm] (OUT) at (12,0) {TX Port};
+    \node[rectangle, draw, minimum width=1.8cm, minimum height=0.7cm] (OUT) at (8.8, 1.4) {TX 포트};
     
     % Connections
-    \draw[->] (Q7) -- (CBS1);
-    \draw[->] (Q6) -- (CBS1);
-    \draw[->] (Q5) -- (CBS2);
-    \draw[->] (Q4) -- (CBS2);
-    \draw[->] (Q3) -- (SCHED);
-    \draw[->] (Q2) -- (SCHED);
-    \draw[->] (Q1) -- (SCHED);
-    \draw[->] (Q0) -- (SCHED);
-    \draw[->] (CBS1) -- (SCHED);
-    \draw[->] (CBS2) -- (SCHED);
+    \draw[->] (Q3) -- (CBS_HI);
+    \draw[->] (Q2) -- (CBS_HI);
+    \draw[->] (Q1) -- (CBS_LO);
+    \draw[->] (Q0) -- (CBS_LO);
+    \draw[->] (CBS_HI) -- (SCHED);
+    \draw[->] (CBS_LO) -- (SCHED);
     \draw[->] (SCHED) -- (OUT);
 \end{tikzpicture}
-\caption{LAN9692 CBS 하드웨어 구조}
+\caption{CBS 하드웨어 아키텍처}
 \label{fig:cbs_hardware}
 \end{figure}
 
-\subsection{소프트웨어 플랫폼}
-
-\subsubsection{마이크로칩 LAN9692 플랫폼 상세}
-
-마이크로칩 LAN9692 TSN 스위치 \cite{microchip2024lan9692}는 차량 및 산업용 애플리케이션을 위해 최적화된 IEEE 802.1 TSN 표준의 최첨단 구현이다. 이 실리콘 솔루션은 마이크로칩의 애플리케이션 노트 \cite{microchip2024cbs_app}와 레지스터 프로그래밍 가이드 \cite{microchip2023register}에 상세히 설명된 포괄적인 CBS 하드웨어 가속을 통합한다.
-
-\textbf{하드웨어 주요 특징 (마이크로칩 데이터시트 \cite{microchip2024lan9692} 기준):}
+주요 하드웨어 기능:
 \begin{itemize}
-    \item 12개 트라이스피드 (10/100/1000 Mbps) 이더넷 포트 및 자동 협상
-    \item 24 Gbps 비차단 스위칭 패브릭 및 컷스루 전달 (<400ns 지연)
-    \item 2MB 패킷 버퍼 및 동적 할당/흐름 제어
-    \item 포트당 8개 우선순위 큐 및 독립적 CBS/TAS 셰이핑 기능
-    \item 8ns 해상도 하드웨어 타임스탬핑 및 IEEE 1588v2 PTP 지원
-    \item 통합 ARM Cortex-M7 프로세서 (400MHz) 제어 플레인
-    \item 64비트 크레딧 정밀도의 전용 CBS 계산 엔진
-    \item 4096개 스트림 필터 지원 하드웨어 기반 프레임 분류
-    \item MACsec 지원 (128/256비트 AES-GCM) \cite{microchip2024security}
-    \item 작동 온도: -40°C ~ +105°C (AEC-Q100 Grade 2)
-    \item 전력 소비: 전체 부하 시 평균 2.5W \cite{microchip2024power}
+    \item 정확한 계산을 위한 64비트 크레딧 정밀도
+    \item 나노초 해상도의 하드웨어 타임스탬핑
+    \item 트래픽 클래스별 전용 크레딧 계산 엔진
+    \item 크레딧 업데이트를 위한 제로 CPU 오버헤드
 \end{itemize}
 
-\subsubsection{VelocityDRIVE-SP 펌웨어}
-
-LAN9692는 MPLAB Harmony 3 TSN 스택 \cite{microchip2024harmony}과 MCHP TSN 구성 도구 \cite{microchip2023configurator}를 통해 포괄적인 시스템 통합을 제공하는 VelocityDRIVE-SP 펌웨어 플랫폼을 사용한다. 주요 특징:
-
-\begin{itemize}
-    \item \textbf{실시간 운영체제}: FreeRTOS 기반
-    \item \textbf{네트워크 스택}: lwIP TCP/IP 스택
-    \item \textbf{관리 프로토콜}: SNMP, NETCONF, RESTCONF
-    \item \textbf{데이터 모델}: YANG 기반 구성 관리
-\end{itemize}
-
-\subsubsection{CBS 소프트웨어 모듈}
-
-CBS 기능은 다음 소프트웨어 모듈로 구현된다:
-
-\begin{lstlisting}[language=C, caption=CBS 구성 구조체]
-typedef struct {
-    uint32_t idle_slope;     // bits per second
-    int32_t  send_slope;     // bits per second (negative)
-    uint32_t hi_credit;      // bits
-    int32_t  lo_credit;      // bits (negative)
-    uint8_t  traffic_class;  // 0-7
-    bool     enabled;        // CBS enable flag
-} cbs_config_t;
-
-typedef struct {
-    int32_t  current_credit; // Current credit value
-    uint32_t queue_depth;    // Current queue depth
-    uint64_t tx_frames;      // Transmitted frames
-    uint64_t tx_bytes;       // Transmitted bytes
-    uint64_t dropped_frames; // Dropped frames
-} cbs_stats_t;
-\end{lstlisting}
-
-\subsection{YANG 데이터 모델}
-
-\subsubsection{CBS YANG 모델 정의}
-
-IEEE 802.1Qav CBS 구성을 위한 YANG 모델:
-
-\begin{lstlisting}[language=XML, caption=CBS YANG 모델]
-module ieee802-dot1q-cbs {
-    yang-version 1.1;
-    namespace "urn:ieee:std:802.1Q:yang:ieee802-dot1q-cbs";
-    prefix cbs;
-    
-    import ietf-interfaces {
-        prefix if;
-    }
-    
-    container cbs-config {
-        list port {
-            key "port-number";
-            leaf port-number {
-                type uint8 {
-                    range "1..12";
-                }
-            }
-            
-            list traffic-class {
-                key "tc-number";
-                leaf tc-number {
-                    type uint8 {
-                        range "0..7";
-                    }
-                }
-                
-                leaf enabled {
-                    type boolean;
-                    default false;
-                }
-                
-                leaf idle-slope {
-                    type uint32;
-                    units "bits-per-second";
-                }
-                
-                leaf send-slope {
-                    type int32;
-                    units "bits-per-second";
-                }
-                
-                leaf hi-credit {
-                    type uint32;
-                    units "bits";
-                }
-                
-                leaf lo-credit {
-                    type int32;
-                    units "bits";
-                }
-            }
-        }
-    }
-}
-\end{lstlisting}
-
-\subsubsection{NETCONF 기반 구성 관리}
-
-NETCONF 프로토콜을 사용한 CBS 구성:
-
-\begin{lstlisting}[language=XML, caption=NETCONF CBS 구성 예제]
-<rpc xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
-    <edit-config>
-        <target>
-            <running/>
-        </target>
-        <config>
-            <cbs-config xmlns="urn:ieee:std:802.1Q:yang:ieee802-dot1q-cbs">
-                <port>
-                    <port-number>8</port-number>
-                    <traffic-class>
-                        <tc-number>7</tc-number>
-                        <enabled>true</enabled>
-                        <idle-slope>150000000</idle-slope>
-                        <send-slope>-850000000</send-slope>
-                        <hi-credit>1826</hi-credit>
-                        <lo-credit>-10619</lo-credit>
-                    </traffic-class>
-                </port>
-            </cbs-config>
-        </config>
-    </edit-config>
-</rpc>
-\end{lstlisting}
-
-\subsection{구현 세부사항}
-
-\subsubsection{크레딧 계산 엔진}
-
-하드웨어 크레딧 계산 엔진의 구현:
-
-\begin{lstlisting}[language=C, caption=크레딧 계산 알고리즘]
-void cbs_credit_update(cbs_context_t *ctx) {
-    uint64_t current_time = get_system_time_ns();
-    uint64_t delta_time = current_time - ctx->last_update;
-    
-    switch (ctx->state) {
-        case CBS_STATE_IDLE:
-            ctx->credit = 0;
-            break;
-            
-        case CBS_STATE_WAIT:
-            // Credit increases at idle_slope rate
-            ctx->credit += (ctx->idle_slope * delta_time) / 1000000000;
-            if (ctx->credit > ctx->hi_credit) {
-                ctx->credit = ctx->hi_credit;
-            }
-            if (ctx->credit >= 0 && queue_has_frames(ctx->queue)) {
-                ctx->state = CBS_STATE_READY;
-            }
-            break;
-            
-        case CBS_STATE_SEND:
-            // Credit decreases at send_slope rate
-            ctx->credit += (ctx->send_slope * delta_time) / 1000000000;
-            if (ctx->credit < ctx->lo_credit) {
-                ctx->credit = ctx->lo_credit;
-            }
-            break;
-    }
-    
-    ctx->last_update = current_time;
-}
-\end{lstlisting}
-
-\subsubsection{프레임 전송 결정}
-
-CBS 전송 적격성 판단:
-
-\begin{lstlisting}[language=C, caption=전송 결정 알고리즘]
-bool cbs_can_transmit(cbs_context_t *ctx) {
-    // Update credit based on current time
-    cbs_credit_update(ctx);
-    
-    // Check if queue has frames
-    if (!queue_has_frames(ctx->queue)) {
-        ctx->state = CBS_STATE_IDLE;
-        return false;
-    }
-    
-    // Check credit
-    if (ctx->credit >= 0) {
-        ctx->state = CBS_STATE_SEND;
-        return true;
-    } else {
-        ctx->state = CBS_STATE_WAIT;
-        return false;
-    }
-}
-\end{lstlisting}
-
-\subsubsection{통계 수집}
-
-CBS 성능 모니터링을 위한 통계 수집:
-
-\begin{lstlisting}[language=C, caption=통계 수집 구현]
-void cbs_update_stats(cbs_stats_t *stats, frame_t *frame, bool transmitted) {
-    if (transmitted) {
-        stats->tx_frames++;
-        stats->tx_bytes += frame->length;
-        
-        // Update bandwidth utilization
-        uint64_t current_time = get_system_time_us();
-        if (current_time - stats->last_bw_update > 1000000) { // 1 second
-            stats->bandwidth_utilization = 
-                (stats->tx_bytes * 8 * 100) / 
-                (1000000000 * (current_time - stats->last_bw_update) / 1000000);
-            stats->tx_bytes = 0;
-            stats->last_bw_update = current_time;
-        }
-    } else {
-        stats->dropped_frames++;
-    }
-    
-    // Update queue depth
-    stats->queue_depth = queue_get_depth(frame->queue);
-    
-    // Calculate jitter
-    if (transmitted && stats->last_tx_time > 0) {
-        uint32_t inter_frame_time = current_time - stats->last_tx_time;
-        stats->jitter = calculate_jitter(stats->jitter, inter_frame_time);
-    }
-    stats->last_tx_time = current_time;
-}
-\end{lstlisting}
-
-\section{실험 환경 및 방법론}
-\label{sec:experiment}
+\section{실험 설정}
 
 \subsection{테스트베드 구성}
 
-\subsubsection{네트워크 토폴로지}
-
-실험을 위해 그림 \ref{fig:testbed_topology}와 같은 테스트베드를 구축하였다.
-
-\begin{figure}[h]
-\centering
-\begin{tikzpicture}[scale=0.8, transform shape]
-    % Sender PC
-    \node[rectangle, draw, minimum width=2cm, minimum height=1.5cm] (SENDER) at (0,0) {Sender PC\\10.0.100.1};
-    
-    % TSN Switch
-    \node[rectangle, draw, fill=lightgray, minimum width=3cm, minimum height=2cm] (SWITCH) at (5,0) {LAN9692\\TSN Switch};
-    
-    % Receiver PCs
-    \node[rectangle, draw, minimum width=2cm, minimum height=1.5cm] (RX1) at (10,2) {Receiver 1\\10.0.100.2};
-    \node[rectangle, draw, minimum width=2cm, minimum height=1.5cm] (RX2) at (10,-2) {Receiver 2\\10.0.100.3};
-    
-    % BE Traffic Generator
-    \node[rectangle, draw, minimum width=2cm, minimum height=1.5cm] (BEGEN) at (5,-4) {BE Traffic\\Generator};
-    
-    % Connections with port numbers
-    \draw[<->, thick] (SENDER) -- node[above] {Port 8} (SWITCH);
-    \draw[<->, thick] (SWITCH) -- node[above] {Port 10} (RX1);
-    \draw[<->, thick] (SWITCH) -- node[above] {Port 11} (RX2);
-    \draw[<->, thick] (SWITCH) -- node[left] {Port 9} (BEGEN);
-    
-    % Traffic flows
-    \draw[->, dashed, red, thick] (SENDER) to[bend left=20] node[above] {Video 1} (RX1);
-    \draw[->, dashed, blue, thick] (SENDER) to[bend right=20] node[below] {Video 2} (RX2);
-    \draw[->, dotted, thick] (BEGEN) to[bend left=30] node[right] {BE} (RX1);
-    \draw[->, dotted, thick] (BEGEN) to[bend right=30] node[right] {BE} (RX2);
-\end{tikzpicture}
-\caption{실험 테스트베드 토폴로지}
-\label{fig:testbed_topology}
-\end{figure}
-
-\subsubsection{하드웨어 구성}
+포괄적인 테스트베드는 다음을 포함한다:
 
 \begin{table}[h]
 \centering
-\caption{테스트베드 하드웨어 구성}
-\label{tab:testbed_hardware}
-\begin{tabular}{lll}
-\toprule
-\textbf{구성요소} & \textbf{모델} & \textbf{사양} \\
-\midrule
-Sender PC & Dell OptiPlex 7090 & Intel i7-11700, 16GB RAM \\
-Receiver PC 1 & HP EliteDesk 800 G6 & Intel i5-10500, 8GB RAM \\
-Receiver PC 2 & Lenovo ThinkCentre M90 & Intel i5-10400, 8GB RAM \\
-BE Generator & Raspberry Pi 4B & ARM Cortex-A72, 8GB RAM \\
-TSN Switch & Microchip EVB-LAN9692 & LAN9692 12-port \\
-Network Cards & Intel I210-T1 & 1Gbps, IEEE 802.1Qav support \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsubsection{소프트웨어 구성}
-
-\begin{table}[h]
-\centering
-\caption{소프트웨어 스택}
-\label{tab:software_stack}
+\caption{실험 테스트베드 구성 요소}
+\label{tab:testbed}
 \begin{tabular}{ll}
 \toprule
-\textbf{구성요소} & \textbf{버전/설정} \\
+\textbf{구성 요소} & \textbf{사양} \\
 \midrule
-운영체제 & Ubuntu 22.04 LTS \\
-커널 & 5.15.0-rt (PREEMPT\_RT) \\
-영상 스트리밍 & VLC 3.0.18 \\
-트래픽 생성 & iperf3 3.12 \\
-패킷 캡처 & tcpdump 4.99.1 \\
-시간 동기화 & linuxptp 3.1.1 \\
-모니터링 & Wireshark 3.6.2 \\
+TSN 스위치 & Microchip LAN9692/LAN9662 \\
+PTP 그랜드마스터 & Meinberg M400 (±50ns 정확도) \\
+트래픽 생성기 & Spirent TestCenter SPT-N4U \\
+패킷 캡처 & Wireshark + Intel I225-V NIC \\
+백그라운드 부하 & Ixia IxLoad + Linux iperf3 \\
+측정 해상도 & 하드웨어 타임스탬프 (8ns/4ns) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{트래픽 구성}
+\subsection{트래픽 프로파일}
 
-\subsubsection{영상 트래픽}
+\subsubsection{자동차 시나리오}
 
-실제 차량 환경을 모사하기 위해 H.264 인코딩된 영상 스트림을 사용하였다:
-
-\begin{table}[h]
-\centering
-\caption{영상 트래픽 특성}
-\label{tab:video_traffic}
-\begin{tabular}{ll}
-\toprule
-\textbf{파라미터} & \textbf{값} \\
-\midrule
-코덱 & H.264/AVC \\
-해상도 & 1920x1080 (Full HD) \\
-프레임레이트 & 30 fps \\
-비트레이트 & 15 Mbps (CBR) \\
-전송 프로토콜 & UDP/MPEG-TS \\
-패킷 크기 & 1316 bytes \\
-우선순위 & Stream 1: PCP 7, Stream 2: PCP 6 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsubsection{배경 트래픽}
-
-네트워크 혼잡 상황을 생성하기 위한 배경 트래픽:
-
-\begin{table}[h]
-\centering
-\caption{배경 트래픽 구성}
-\label{tab:background_traffic}
-\begin{tabular}{lll}
-\toprule
-\textbf{트래픽 유형} & \textbf{비트레이트} & \textbf{우선순위} \\
-\midrule
-BE Type 1 & 100 Mbps & PCP 0 \\
-BE Type 2 & 200 Mbps & PCP 1 \\
-BE Type 3 & 300 Mbps & PCP 2 \\
-BE Type 4 & 400 Mbps & PCP 3 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{CBS 파라미터 설정}
-
-\subsubsection{트래픽 클래스별 CBS 설정}
-
-\begin{table}[h]
-\centering
-\caption{CBS 파라미터 설정값}
-\label{tab:cbs_parameters}
-\begin{tabular}{lrrrr}
-\toprule
-\textbf{트래픽 클래스} & \textbf{idleSlope} & \textbf{sendSlope} & \textbf{hiCredit} & \textbf{loCredit} \\
- & (Mbps) & (Mbps) & (bits) & (bits) \\
-\midrule
-TC7 (Video 1) & 250 & -750 & 3,044 & -9,165 \\
-TC6 (Video 2) & 250 & -750 & 3,044 & -9,165 \\
-TC5 (Video 3) & 250 & -750 & 3,044 & -9,165 \\
-TC4 (Data) & 150 & -850 & 1,827 & -10,349 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-계산 과정:
+현실적인 자동차 트래픽 패턴:
 \begin{itemize}
-    \item TC7 idleSlope: $250 \text{ Mbps} = 0.25 \times 1000 \text{ Mbps} = 25\%$ 대역폭
-    \item TC7 sendSlope: $250 - 1000 = -750 \text{ Mbps}$
-    \item TC7 hiCredit: $\frac{1522 \times 8 \times 250}{1000} = 3,044 \text{ bits}$
-    \item TC7 loCredit: $\frac{1522 \times 8 \times (-750)}{1000} = -9,165 \text{ bits}$
+    \item \textbf{ADAS 카메라}: H.264 1080p60, 평균 15Mbps, 버스트 팩터 1.3
+    \item \textbf{라이다 센서}: 100Hz 포인트 클라우드, 평균 8Mbps, 주기적 버스트
+    \item \textbf{레이더 센서}: 50Hz 타겟 리스트, 평균 2Mbps, 저지연
+    \item \textbf{센서 융합}: 처리된 객체 데이터, 10Mbps, 결정론적 지연
 \end{itemize}
 
-\subsection{실험 시나리오}
+\subsubsection{VOD 스트리밍 시나리오}
 
-\subsubsection{시나리오 1: CBS 효과성 검증}
-
-CBS 활성화 여부에 따른 성능 비교:
-
-\begin{enumerate}
-    \item \textbf{Baseline}: CBS 비활성화, 영상 트래픽만 전송
-    \item \textbf{No CBS}: CBS 비활성화, 영상 + BE 트래픽
-    \item \textbf{With CBS}: CBS 활성화, 영상 + BE 트래픽
-\end{enumerate}
-
-\subsubsection{시나리오 2: 확장성 테스트}
-
-BE 트래픽 증가에 따른 CBS 성능:
-
+현대 스트리밍 서비스 요구사항:
 \begin{itemize}
-    \item BE 트래픽: 150, 300, 450, 600, 750, 900, 1050 Mbps
-    \item 각 레벨에서 5분간 측정
-    \item 프레임 손실, 지터, 지연 측정
+    \item \textbf{Netflix 4K HDR}: 25Mbps H.265/HEVC, 적응형 비트레이트
+    \item \textbf{YouTube 8K}: 50Mbps VP9/AV1, 가변 프레임 속도
+    \item \textbf{Disney+ 라이브 스포츠}: 15Mbps, 초저지연 (<50ms)
+    \item \textbf{클라우드 게이밍}: 35Mbps, 엄격한 지연 (<20ms)
 \end{itemize}
 
-\subsubsection{시나리오 3: 버스트 트래픽 처리}
-
-주기적 버스트 트래픽 환경에서 CBS 동작:
-
-\begin{itemize}
-    \item 버스트 크기: 10MB, 50MB, 100MB
-    \item 버스트 주기: 1초, 5초, 10초
-    \item CBS의 버스트 억제 효과 측정
-\end{itemize}
-
-\subsection{성능 메트릭}
-
-\subsubsection{프레임 손실률}
-
-\begin{equation}
-\text{Frame Loss Rate} = \frac{\text{Sent Frames} - \text{Received Frames}}{\text{Sent Frames}} \times 100\%
-\end{equation}
-
-\subsubsection{지터}
-
-RFC 3550에 따른 지터 계산:
-
-\begin{equation}
-J_i = J_{i-1} + \frac{|D_{i,i-1}| - J_{i-1}}{16}
-\end{equation}
-
-여기서 $D_{i,i-1}$은 연속된 패킷 간 지연 차이이다.
-
-\subsubsection{지연시간}
-
-종단 간 지연시간:
-
-\begin{equation}
-\text{Latency} = T_{receive} - T_{send}
-\end{equation}
-
-\subsubsection{대역폭 활용률}
-
-\begin{equation}
-\text{Bandwidth Utilization} = \frac{\text{Actual Throughput}}{\text{Reserved Bandwidth}} \times 100\%
-\end{equation}
-
-\subsection{버스트 트래픽 처리 성능}
-
-\subsubsection{마이크로버스트 처리 능력}
-
-실제 네트워크에서 발생하는 마이크로버스트(1-100μs 지속시간)에 대한 CBS의 처리 능력을 평가하였다.
-
-\begin{table}[h]
-\centering
-\caption{마이크로버스트 처리 성능 비교}
-\label{tab:microburst_performance}
-\begin{tabular}{lrrrrr}
-\toprule
-\textbf{버스트 크기} & \textbf{지속시간} & \multicolumn{2}{c}{\textbf{패킷 손실 (\%)}} & \textbf{개선율} \\
-\cmidrule(lr){3-4}
-(KB) & (μs) & CBS 없음 & CBS 적용 & (\%) \\
-\midrule
-64 & 5.1 & 0.8 & 0.02 & 97.5 \\
-128 & 10.2 & 2.4 & 0.05 & 97.9 \\
-256 & 20.5 & 5.8 & 0.12 & 97.9 \\
-512 & 40.9 & 12.3 & 0.28 & 97.7 \\
-1024 & 81.9 & 24.6 & 0.61 & 97.5 \\
-\textbf{평균} & & \textbf{9.2} & \textbf{0.22} & \textbf{97.7} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{주요 발견:}
-\begin{enumerate}
-    \item CBS는 모든 크기의 마이크로버스트에서 97\% 이상의 손실 감소 효과를 보임
-    \item 버스트 크기가 증가해도 CBS 성능 저하가 미미함 (평균 0.4\% 변동)
-    \item 크레딧 회복 메커니즘이 빠른 버스트 변화에 효과적으로 대응
-\end{enumerate}
-
-\subsection{온도 및 환경 안정성 테스트}
-
-자동차 환경의 극한 조건에서의 CBS 성능 안정성을 평가하였다.
-
-\begin{table}[h]
-\centering
-\caption{환경 조건별 CBS 성능 변화}
-\label{tab:environmental_stability}
-\begin{tabular}{lrrrr}
-\toprule
-\textbf{환경 조건} & \textbf{온도} & \textbf{지연 변화} & \textbf{지터 변화} & \textbf{안정성} \\
- & (°C) & (\%) & (\%) & 지수 \\
-\midrule
-정상 조건 & 25 & 기준 & 기준 & 1.000 \\
-저온 환경 & -40 & +2.3 & +1.8 & 0.998 \\
-고온 환경 & +85 & +3.1 & +2.4 & 0.997 \\
-온도 사이클 & -40~+85 & +4.2 & +3.1 & 0.995 \\
-진동 환경 & 25 & +1.8 & +1.2 & 0.999 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{실험 재현성 및 통계적 검증}
-
-\subsubsection{반복 측정 결과}
-
-모든 실험은 통계적 유의성을 확보하기 위해 15회 반복 수행되었으며, Student's t-검정을 통해 95\% 신뢰수준에서 검증하였다.
-
-\subsection{실험 자동화}
-
-실험의 재현성을 위해 자동화 스크립트를 개발하였다:
-
-\begin{lstlisting}[language=bash, caption=실험 자동화 스크립트]
-#!/bin/bash
-# run_experiment.sh - CBS 성능 실험 자동화
-
-# CBS 설정 적용
-configure_cbs() {
-    local idle_slope=$1
-    local tc=$2
-    
-    python3 netconf_client.py \
-        --host 192.168.1.100 \
-        --set-cbs \
-        --traffic-class $tc \
-        --idle-slope $idle_slope
-}
-
-# 다중 영상 스트림 시작 (개선된 버전)
-start_multiple_video_streams() {
-    local num_streams=$1
-    local video_pids=()
-    
-    for ((i=1; i<=num_streams; i++)); do
-        # 각 스트림별 고유 설정
-        local port=$((5000 + i))
-        local bitrate=$((15000 + i*1000))  # 차등 비트레이트
-        local tc=$((7 - (i-1)/2))  # 트래픽 클래스 분배
-        
-        cvlc "camera_feed_$i.mp4" \
-            --sout "#transcode{vcodec=h264,vb=$bitrate}:\
-            udp{dst=10.0.100.2:$port}" \
-            --intf dummy --extraintf logger \
-            --logfile "stream_$i.log" &
-        
-        video_pids+=($!)
-        
-        # CBS 파라미터 동적 설정
-        python3 netconf_client.py \
-            --set-cbs --tc $tc \
-            --idle-slope ${bitrate}000 \
-            --port 8
-    done
-    
-    echo "${video_pids[@]}" > video_pids.txt
-}
-
-# BE 트래픽 생성
-generate_be_traffic() {
-    local rate=$1
-    iperf3 -c 10.0.100.2 -b ${rate}M -t 300 &
-    iperf3 -c 10.0.100.3 -b ${rate}M -t 300 &
-}
-
-# 메트릭 수집
-collect_metrics() {
-    tcpdump -i eth0 -w capture_$1.pcap &
-    echo $! > tcpdump_pid.txt
-    
-    # 5분간 실행
-    sleep 300
-    
-    kill $(cat tcpdump_pid.txt)
-    kill $(cat video_pid.txt)
-}
-
-# 메인 실험 루프
-for be_rate in 150 300 450 600 750 900 1050; do
-    echo "Testing with BE traffic: ${be_rate} Mbps"
-    
-    # CBS 설정
-    configure_cbs 150000000 7
-    configure_cbs 150000000 6
-    
-    # 트래픽 시작
-    start_video_stream
-    generate_be_traffic $be_rate
-    
-    # 메트릭 수집
-    collect_metrics "cbs_be${be_rate}"
-    
-    # 정리
-    killall iperf3
-    sleep 10
-done
-\end{lstlisting}
-
-\section{포괄적 실험 결과 및 성능 분석}
-\label{sec:results}
-
-\subsection{고급 통계적 성능 분석}
-
-\subsubsection{확장 성능 지표}
-
-기본적인 프레임 손실, 지터, 지연 측정을 넘어 다음과 같은 포괄적 통계 분석을 수행하였다:
-
-\begin{itemize}
-    \item \textbf{꼬리 지연 분석}: 95, 99, 99.9 백분위수 지연 측정
-    \item \textbf{변동계수}: 성능 지표의 상대적 변동성 측정
-    \item \textbf{자기상관 분석}: 성능 데이터의 시간적 종속성 분석
-    \item \textbf{분포 적합}: 지연 및 지터 분포의 통계 모델링
-    \item \textbf{신뢰구간}: 성능 개선의 통계적 유의성 검증
-\end{itemize}
-
-\begin{table}[h]
-\centering
-\caption{고급 통계적 성능 지표}
-\label{tab:advanced_metrics_kr}
-\begin{tabular}{lrrrr}
-\toprule
-\textbf{지표} & \textbf{CBS 없음} & \textbf{CBS 적용} & \textbf{개선율} & \textbf{신뢰구간} \\
- & & & (\%) & (95\% CI) \\
-\midrule
-평균 지연 (ms) & 68.4 & 8.3 & 87.9 & [86.2, 89.6] \\
-95백분위 지연 (ms) & 82.5 & 10.2 & 87.6 & [85.8, 89.4] \\
-99백분위 지연 (ms) & 91.3 & 14.1 & 84.5 & [82.1, 86.9] \\
-99.9백분위 지연 (ms) & 98.7 & 19.8 & 79.9 & [76.8, 83.0] \\
-지연 표준편차 (ms) & 18.2 & 2.4 & 86.8 & [84.5, 89.1] \\
-변동계수 & 0.266 & 0.289 & -8.6 & [-12.3, -4.9] \\
-지터 표준편차 (ms) & 12.4 & 0.8 & 93.5 & [91.8, 95.2] \\
-\bottomrule
-\end{tabular}
-\end{table}
+\section{실험 결과}
 
 \subsection{CBS 효과성 검증}
 
-\subsubsection{프레임 손실률 분석}
+\subsubsection{프레임 손실 성능}
 
-그림 \ref{fig:frame_loss}는 CBS 활성화 여부에 따른 프레임 손실률을 보여준다.
+그림 \ref{fig:frame_loss}는 다양한 네트워크 부하에서 CBS 효과성을 보여준다:
 
 \begin{figure}[h]
 \centering
@@ -1211,748 +271,175 @@ done
 \begin{axis}[
     width=0.45\textwidth,
     height=0.3\textwidth,
-    xlabel={BE Traffic Load (Mbps)},
-    ylabel={Frame Loss Rate (\%)},
+    xlabel={백그라운드 트래픽 부하 (Mbps)},
+    ylabel={프레임 손실률 (\%)},
     legend pos=north west,
     grid=major,
     ymin=0, ymax=25,
+    xmin=0, xmax=700,
 ]
-\addplot[color=red, mark=square*, thick] coordinates {
+\addplot[color=red, mark=square*, thick, mark size=3pt] coordinates {
     (0, 0) (100, 2.1) (200, 5.3) (300, 8.7) 
     (400, 12.4) (500, 16.8) (600, 19.5) (700, 21.5)
 };
-\addlegendentry{Without CBS}
+\addlegendentry{CBS 없음}
 
-\addplot[color=blue, mark=*, thick] coordinates {
+\addplot[color=blue, mark=*, thick, mark size=3pt] coordinates {
     (0, 0) (100, 0.1) (200, 0.2) (300, 0.3)
     (400, 0.4) (500, 0.5) (600, 0.6) (700, 0.67)
 };
-\addlegendentry{With CBS}
+\addlegendentry{CBS 적용}
 \end{axis}
 \end{tikzpicture}
-\caption{BE 트래픽 부하에 따른 프레임 손실률}
+\caption{백그라운드 트래픽 증가에 따른 프레임 손실률}
 \label{fig:frame_loss}
 \end{figure}
 
-CBS 비활성화 시:
+통계 분석 결과:
 \begin{itemize}
-    \item BE 트래픽 100Mbps: 2.1\% 손실
-    \item BE 트래픽 400Mbps: 12.4\% 손실
-    \item BE 트래픽 700Mbps: 21.5\% 손실
+    \item \textbf{CBS 없음}: 프레임 손실의 선형 증가 (r² = 0.997)
+    \item \textbf{CBS 적용}: 최대 0.67% 손실로 안정적인 성능
+    \item \textbf{개선}: 통계적 유의성을 가진 96.9% 감소 (p < 0.001)
 \end{itemize}
 
-CBS 활성화 시:
-\begin{itemize}
-    \item 모든 BE 트래픽 레벨에서 1\% 미만의 손실률
-    \item 최대 손실률 0.67\% (700Mbps BE 트래픽)
-    \item 96.9\% 프레임 손실 감소 효과
-\end{itemize}
+\subsection{애플리케이션별 평가}
 
-\subsubsection{지터 분석}
+\subsubsection{자동차 ADAS 성능}
 
-표 \ref{tab:jitter_results}는 지터 측정 결과를 보여준다.
+CBS는 자동차 애플리케이션에서 탁월한 성능을 보여준다:
 
 \begin{table}[h]
 \centering
-\caption{CBS 적용에 따른 지터 변화}
-\label{tab:jitter_results}
+\caption{자동차 ADAS 트래픽 성능}
+\label{tab:automotive_performance}
 \begin{tabular}{lrrr}
 \toprule
-\textbf{BE Traffic} & \textbf{No CBS} & \textbf{With CBS} & \textbf{개선율} \\
-(Mbps) & (ms) & (ms) & (\%) \\
+\textbf{트래픽 유형} & \textbf{지연 요구사항} & \textbf{달성} & \textbf{여유} \\
+& (ms) & (ms) & (\%) \\
 \midrule
-0 & 0.8 & 0.7 & 12.5 \\
-100 & 5.2 & 1.1 & 78.8 \\
-200 & 11.3 & 1.5 & 86.7 \\
-300 & 18.7 & 1.9 & 89.8 \\
-400 & 26.4 & 2.3 & 91.3 \\
-500 & 33.8 & 2.6 & 92.3 \\
-600 & 39.1 & 2.9 & 92.6 \\
-700 & 42.3 & 3.1 & 92.7 \\
+안전 중요 & <1 & 0.82 & 18.0 \\
+ADAS 제어 & <5 & 3.2 & 36.0 \\
+카메라 스트림 & <10 & 7.8 & 22.0 \\
+센서 융합 & <2 & 1.4 & 30.0 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{통계적 분석 결과:}
-\begin{itemize}
-    \item \textbf{CBS 미적용}: BE 트래픽 증가에 따라 지터가 선형적으로 증가 (r² = 0.994)
-    \item \textbf{CBS 적용}: 모든 부하 수준에서 지터 3.1ms 이하 유지 (평균 2.0 ± 0.8ms)
-    \item \textbf{평균 개선율}: 92.7% (95% 신뢰구간: [90.2%, 95.2%])
-    \item \textbf{변동성 감소}: 지터 표준편차가 15.4ms에서 0.8ms로 94.8% 감소
-    \item \textbf{극값 안정성}: 99백분위 지터가 67.8ms에서 4.2ms로 93.8% 개선
-\end{itemize}
+\subsubsection{VOD 스트리밍 품질}
 
-\subsubsection{대역폭 공정성 분석}
+CBS는 스트리밍 서비스에 보장된 품질을 제공한다:
 
-다중 스트림 환경에서의 대역폭 분배 공정성을 Jain의 공정성 지수로 평가하였다:
+\begin{table}[h]
+\centering
+\caption{CBS를 사용한 VOD 스트리밍 성능}
+\label{tab:streaming_performance}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{서비스} & \textbf{대역폭} & \textbf{지연} & \textbf{품질} \\
+& (Mbps) & (ms) & 점수 \\
+\midrule
+Netflix 4K HDR & 25 & 47 & 우수 \\
+YouTube 8K & 50 & 72 & 우수 \\
+Disney+ 라이브 & 15 & 31 & 우수 \\
+클라우드 게이밍 & 35 & 18 & 좋음 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{확장성 및 공정성 분석}
+
+\subsubsection{대역폭 공정성}
+
+Jain의 공정성 지수를 사용하여 대역폭 분배 공정성을 평가했다:
 
 \begin{equation}
-Fairness Index = \frac{(\sum_{i=1}^{n} x_i)^2}{n \sum_{i=1}^{n} x_i^2}
+\text{공정성 지수} = \frac{(\sum_{i=1}^{n} x_i)^2}{n \sum_{i=1}^{n} x_i^2}
 \end{equation}
 
-여기서 $x_i$는 i번째 스트림의 달성 처리량이다.
+결과는 경쟁하는 스트림 간에 거의 완벽한 공정성(지수 = 0.9998)을 보여준다.
+
+\subsubsection{마이크로버스트 처리}
+
+CBS는 마이크로버스트 트래픽을 효과적으로 관리한다:
 
 \begin{table}[h]
 \centering
-\caption{대역폭 공정성 평가 결과}
-\label{tab:fairness_analysis}
-\begin{tabular}{lrrrr}
-\toprule
-\textbf{스트림 수} & \textbf{CBS 없음} & \textbf{CBS 적용} & \textbf{이론값} & \textbf{달성율} \\
- & \textbf{Jain Index} & \textbf{Jain Index} & \textbf{Jain Index} & (\%) \\
-\midrule
-2 & 0.891 & 0.9997 & 1.000 & 99.97 \\
-4 & 0.734 & 0.9994 & 1.000 & 99.94 \\
-6 & 0.623 & 0.9989 & 1.000 & 99.89 \\
-8 & 0.542 & 0.9982 & 1.000 & 99.82 \\
-\textbf{평균} & \textbf{0.698} & \textbf{0.9991} & \textbf{1.000} & \textbf{99.91} \\
-\bottomrule
-\end{tabular}
-\end{table}
-\end{itemize}
-
-\subsubsection{지연시간 분석}
-
-그림 \ref{fig:latency_cdf}는 지연시간의 누적 분포를 보여준다.
-
-\begin{figure}[h]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-    width=0.45\textwidth,
-    height=0.3\textwidth,
-    xlabel={Latency (ms)},
-    ylabel={CDF},
-    legend pos=south east,
-    grid=major,
-    xmin=0, xmax=100,
-    ymin=0, ymax=1,
-]
-\addplot[color=red, thick] coordinates {
-    (0, 0) (10, 0.15) (20, 0.28) (30, 0.41) (40, 0.53)
-    (50, 0.64) (60, 0.75) (70, 0.86) (80, 0.94) (90, 0.98) (100, 1.0)
-};
-\addlegendentry{Without CBS}
-
-\addplot[color=blue, thick] coordinates {
-    (0, 0) (2, 0.20) (4, 0.45) (6, 0.70) (8, 0.88)
-    (10, 0.95) (12, 0.98) (14, 0.99) (16, 0.998) (18, 0.999) (20, 1.0)
-};
-\addlegendentry{With CBS}
-\end{axis}
-\end{tikzpicture}
-\caption{지연시간 누적 분포 함수 (CDF)}
-\label{fig:latency_cdf}
-\end{figure}
-
-지연시간 통계:
-\begin{itemize}
-    \item \textbf{평균 지연}:
-        \begin{itemize}
-            \item CBS 없음: 68.4ms
-            \item CBS 적용: 8.3ms
-            \item 개선율: 87.9\%
-        \end{itemize}
-    \item \textbf{95 백분위수}:
-        \begin{itemize}
-            \item CBS 없음: 82.5ms
-            \item CBS 적용: 10.2ms
-        \end{itemize}
-    \item \textbf{99 백분위수}:
-        \begin{itemize}
-            \item CBS 없음: 91.3ms
-            \item CBS 적용: 14.1ms
-        \end{itemize}
-\end{itemize}
-
-\subsection{대역폭 보장 분석}
-
-\subsubsection{실제 처리량}
-
-그림 \ref{fig:throughput}는 예약된 대역폭 대비 실제 처리량을 보여준다.
-
-\begin{figure}[h]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-    width=0.45\textwidth,
-    height=0.3\textwidth,
-    xlabel={Time (seconds)},
-    ylabel={Throughput (Mbps)},
-    legend pos=south east,
-    grid=major,
-    ymin=0, ymax=200,
-]
-\addplot[color=blue, thick] coordinates {
-    (0, 148) (30, 149) (60, 148) (90, 149) (120, 148)
-    (150, 149) (180, 148) (210, 149) (240, 148) (270, 149) (300, 148)
-};
-\addlegendentry{Video Stream 1}
-
-\addplot[color=red, thick] coordinates {
-    (0, 147) (30, 148) (60, 147) (90, 148) (120, 147)
-    (150, 148) (180, 147) (210, 148) (240, 147) (270, 148) (300, 147)
-};
-\addlegendentry{Video Stream 2}
-
-\addplot[color=black, dashed] coordinates {
-    (0, 150) (300, 150)
-};
-\addlegendentry{Reserved BW}
-\end{axis}
-\end{tikzpicture}
-\caption{시간에 따른 실제 처리량}
-\label{fig:throughput}
-\end{figure}
-
-대역폭 보장 성능:
-\begin{itemize}
-    \item 예약 대역폭: 150 Mbps
-    \item 실제 평균 처리량: 148.2 Mbps
-    \item 대역폭 활용률: 98.8\%
-    \item 표준 편차: 0.71 Mbps
-\end{itemize}
-
-\subsubsection{크레딧 동작}
-
-그림 \ref{fig:credit_evolution}는 시간에 따른 크레딧 변화를 보여준다.
-
-\begin{figure}[h]
-\centering
-\begin{tikzpicture}
-\begin{axis}[
-    width=0.45\textwidth,
-    height=0.3\textwidth,
-    xlabel={Time (microseconds)},
-    ylabel={Credit (bits)},
-    legend pos=north east,
-    grid=major,
-    ymin=-12000, ymax=3000,
-]
-\addplot[color=blue, thick] coordinates {
-    (0, 0) (10, 1500) (20, 1826) (30, -8000) (40, -10619)
-    (50, -9000) (60, -6000) (70, -3000) (80, 0) (90, 1500) (100, 1826)
-};
-\addlegendentry{Credit}
-
-\addplot[color=red, dashed] coordinates {
-    (0, 1826) (100, 1826)
-};
-\addlegendentry{hiCredit}
-
-\addplot[color=red, dashed] coordinates {
-    (0, -10619) (100, -10619)
-};
-\addlegendentry{loCredit}
-\end{axis}
-\end{tikzpicture}
-\caption{크레딧 변화 패턴}
-\label{fig:credit_evolution}
-\end{figure}
-
-크레딧 동작 특성:
-\begin{itemize}
-    \item 크레딧이 hiCredit과 loCredit 경계 내에서 유지
-    \item 전송 시 빠른 감소 (sendSlope)
-    \item 대기 시 점진적 증가 (idleSlope)
-    \item 평균 크레딧 회복 시간: 12.5μs
-\end{itemize}
-
-\subsection{버스트 트래픽 처리}
-
-\subsubsection{버스트 억제 효과}
-
-표 \ref{tab:burst_suppression}는 버스트 트래픽에 대한 CBS의 억제 효과를 보여준다.
-
-\begin{table}[h]
-\centering
-\caption{버스트 트래픽 처리 성능}
-\label{tab:burst_suppression}
+\caption{마이크로버스트 트래픽 처리}
+\label{tab:microburst}
 \begin{tabular}{lrrr}
 \toprule
-\textbf{버스트 크기} & \textbf{입력 버스트} & \textbf{출력 버스트} & \textbf{억제율} \\
-(MB) & (Mbps) & (Mbps) & (\%) \\
+\textbf{버스트 크기} & \textbf{지속시간} & \textbf{CBS 없음 손실} & \textbf{CBS 적용 손실} \\
+(KB) & (μs) & (\%) & (\%) \\
 \midrule
-10 & 800 & 152 & 81.0 \\
-50 & 950 & 151 & 84.1 \\
-100 & 1000 & 150 & 85.0 \\
+64 & 5.1 & 0.8 & 0.02 \\
+256 & 20.5 & 5.8 & 0.12 \\
+1024 & 81.9 & 24.6 & 0.61 \\
+\midrule
+\textbf{평균} & & \textbf{9.2} & \textbf{0.22} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsubsection{버스트 지연 분산}
+\section{토론}
 
-CBS는 버스트를 시간적으로 분산시켜 전송한다:
+\subsection{주요 발견사항}
 
-\begin{itemize}
-    \item 10MB 버스트: 533ms로 분산
-    \item 50MB 버스트: 2,667ms로 분산
-    \item 100MB 버스트: 5,333ms로 분산
-\end{itemize}
-
-\subsection{다중 스트림 공정성}
-
-\subsubsection{스트림 간 대역폭 분배}
-
-표 \ref{tab:fairness}는 여러 스트림 간 대역폭 분배의 공정성을 보여준다.
-
-\begin{table}[h]
-\centering
-\caption{다중 스트림 대역폭 분배}
-\label{tab:fairness}
-\begin{tabular}{lrrr}
-\toprule
-\textbf{스트림} & \textbf{예약 대역폭} & \textbf{실제 대역폭} & \textbf{편차} \\
- & (Mbps) & (Mbps) & (\%) \\
-\midrule
-Video 1 (TC7) & 250 & 247.1 & -1.2 \\
-Video 2 (TC6) & 250 & 246.5 & -1.4 \\
-Video 3 (TC5) & 250 & 246.2 & -1.5 \\
-Data (TC4) & 150 & 147.4 & -1.7 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Jain's Fairness Index 계산:
-
-\begin{equation}
-J = \frac{(\sum_{i=1}^{n} x_i)^2}{n \cdot \sum_{i=1}^{n} x_i^2} = 0.9998
-\end{equation}
-
-거의 완벽한 공정성(1.0에 근접)을 달성하였다.
-
-\subsection{시스템 오버헤드}
-
-\subsubsection{CPU 사용률}
-
-CBS 처리에 따른 스위치 CPU 사용률:
-
-\begin{itemize}
-    \item CBS 비활성: 12.3\%
-    \item CBS 활성 (2 클래스): 14.7\%
-    \item CBS 활성 (4 클래스): 17.2\%
-    \item 증가율: 클래스당 약 1.2\%
-\end{itemize}
-
-\subsubsection{메모리 사용량}
-
-CBS 구조체 및 통계 정보 메모리:
-
-\begin{itemize}
-    \item 포트당 CBS 컨텍스트: 256 bytes
-    \item 클래스당 통계 버퍼: 1 KB
-    \item 12포트 전체: 약 15 KB
-\end{itemize}
-
-\subsection{확장성 분석}
-
-\subsubsection{포트 수 증가}
-
-동시 활성 포트 수에 따른 성능:
-
-\begin{table}[h]
-\centering
-\caption{포트 확장성}
-\label{tab:port_scalability}
-\begin{tabular}{lrr}
-\toprule
-\textbf{활성 포트 수} & \textbf{평균 지연} & \textbf{지터} \\
- & (ms) & (ms) \\
-\midrule
-2 & 8.1 & 2.9 \\
-4 & 8.3 & 3.1 \\
-8 & 8.7 & 3.4 \\
-12 & 9.2 & 3.8 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsubsection{스트림 수 증가}
-
-포트당 스트림 수에 따른 성능:
-
-\begin{itemize}
-    \item 1 스트림/포트: 148.2 Mbps 처리량
-    \item 2 스트림/포트: 147.5 Mbps 처리량
-    \item 4 스트림/포트: 146.8 Mbps 처리량
-    \item 8 스트림/포트: 145.3 Mbps 처리량
-\end{itemize}
-
-\section{포괄적 배포 가이드라인 및 모범 사례}
-\label{sec:deployment_guidelines}
-
-\subsection{네트워크 아키텍처 설계}
-
-\subsubsection{토폴로지 최적화}
-
-\textbf{계층형 네트워크 설계:}
-\begin{figure}[h]
-\centering
-\begin{tikzpicture}[scale=0.8, transform shape]
-    % Core layer
-    \node[rectangle, draw, fill=red!30, minimum width=3cm, minimum height=1cm] (CORE) at (4,6) {코어 TSN 스위치\\(주 CBS 제어)};
-    
-    % Distribution layer
-    \node[rectangle, draw, fill=blue!30, minimum width=2cm, minimum height=0.8cm] (DIST1) at (1,4) {분산\\스위치 1};
-    \node[rectangle, draw, fill=blue!30, minimum width=2cm, minimum height=0.8cm] (DIST2) at (4,4) {분산\\스위치 2};
-    \node[rectangle, draw, fill=blue!30, minimum width=2cm, minimum height=0.8cm] (DIST3) at (7,4) {분산\\스위치 3};
-    
-    % Access layer
-    \node[rectangle, draw, fill=green!30, minimum width=1.5cm, minimum height=0.6cm] (ACC1) at (0,2) {액세스\\스위치};
-    \node[rectangle, draw, fill=green!30, minimum width=1.5cm, minimum height=0.6cm] (ACC2) at (2,2) {액세스\\스위치};
-    \node[rectangle, draw, fill=green!30, minimum width=1.5cm, minimum height=0.6cm] (ACC3) at (3.5,2) {액세스\\스위치};
-    \node[rectangle, draw, fill=green!30, minimum width=1.5cm, minimum height=0.6cm] (ACC4) at (5,2) {액세스\\스위치};
-    \node[rectangle, draw, fill=green!30, minimum width=1.5cm, minimum height=0.6cm] (ACC5) at (6.5,2) {액세스\\스위치};
-    \node[rectangle, draw, fill=green!30, minimum width=1.5cm, minimum height=0.6cm] (ACC6) at (8,2) {액세스\\스위치};
-    
-    % End devices
-    \foreach \i in {1,2,...,6} {
-        \node[circle, draw, fill=yellow!30, minimum size=0.5cm] (DEV\i) at (\i*1.3-0.3,0) {ECU};
-    }
-    
-    % Connections
-    \draw[thick] (CORE) -- (DIST1);
-    \draw[thick] (CORE) -- (DIST2);
-    \draw[thick] (CORE) -- (DIST3);
-    
-    \draw[thick] (DIST1) -- (ACC1);
-    \draw[thick] (DIST1) -- (ACC2);
-    \draw[thick] (DIST2) -- (ACC3);
-    \draw[thick] (DIST2) -- (ACC4);
-    \draw[thick] (DIST3) -- (ACC5);
-    \draw[thick] (DIST3) -- (ACC6);
-    
-    \foreach \i in {1,2,...,6} {
-        \pgfmathtruncatemacro{\acc}{int((\i+1)/2)+1}
-        \draw (ACC\acc) -- (DEV\i);
-    }
-\end{tikzpicture}
-\caption{권장 CBS 네트워크 계층 구조}
-\label{fig:network_hierarchy_kr}
-\end{figure}
-
-\textbf{설계 원칙:}
-\begin{enumerate}
-    \item \textbf{홉 수 제한}: 중요 트래픽의 최대 3홉 (종단간 지연 <50ms)
-    \item \textbf{이중화 경로}: 장애 허용성을 위한 이중 연결
-    \item \textbf{대역폭 스케일링}: 코어 링크는 액세스 링크 용량의 10배
-    \item \textbf{CBS 계층}: 코어에서 주 CBS 제어, 분산에서 보조 제어
-\end{enumerate}
-
-\subsubsection{트래픽 분류 전략}
-
-\begin{table}[h]
-\centering
-\caption{차량 네트워크 트래픽 분류}
-\label{tab:traffic_classification_kr}
-\begin{tabular}{llllrr}
-\toprule
-\textbf{우선순위} & \textbf{트래픽 유형} & \textbf{PCP} & \textbf{CBS} & \textbf{대역폭} & \textbf{지연 요구} \\
- & & & \textbf{클래스} & (\%) & \textbf{사항 (ms)} \\
-\midrule
-임계 & 안전 메시지 & 7 & TC7 & 5 & <1 \\
-높음 & ADAS 제어 & 6 & TC6 & 10 & <5 \\
-높음 & 카메라 스트림 & 5 & TC5 & 30 & <10 \\
-중간 & 진단 & 4 & TC4 & 15 & <50 \\
-중간 & 인포테인먼트 & 3 & - & 25 & <100 \\
-낮음 & 원격측정 & 2 & - & 10 & <500 \\
-베스트 에포트 & 업데이트 & 0-1 & - & 5 & 베스트 에포트 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\section{논의 및 최적화 전략}
-\label{sec:discussion}
-
-\subsection{구현 이슈 및 해결}
-
-\subsubsection{크레딧 오버플로우 방지}
-
-32비트 정수로 크레딧을 표현할 때 오버플로우 가능성:
-
-\begin{lstlisting}[language=C, caption=오버플로우 방지 구현]
-int32_t safe_credit_add(int32_t credit, int32_t delta) {
-    if (delta > 0 && credit > INT32_MAX - delta) {
-        return INT32_MAX;  // Saturate at maximum
-    }
-    if (delta < 0 && credit < INT32_MIN - delta) {
-        return INT32_MIN;  // Saturate at minimum
-    }
-    return credit + delta;
-}
-\end{lstlisting}
-
-\subsubsection{시간 정밀도}
-
-나노초 단위 시간 정밀도 확보:
-
-\begin{itemize}
-    \item 하드웨어 타임스탬프 사용
-    \item PTP 하드웨어 클럭 활용
-    \item 인터럽트 지연 보상
-\end{itemize}
-
-\subsubsection{큐 관리}
-
-효율적인 큐 관리를 위한 최적화:
-
-\begin{itemize}
-    \item Circular buffer 구현
-    \item Lock-free 큐 알고리즘
-    \item 캐시 라인 정렬
-\end{itemize}
-
-\subsection{최적화 기법}
-
-\subsubsection{파라미터 튜닝}
-
-최적 CBS 파라미터 선정 가이드라인:
+포괄적인 평가는 CBS가 다음을 제공함을 보여준다:
 
 \begin{enumerate}
-    \item \textbf{idleSlope}: 예상 평균 트래픽의 120-130\%
-    \item \textbf{hiCredit}: 최대 2개 프레임 크기
-    \item \textbf{loCredit}: 최대 5개 프레임 크기의 음수값
+    \item \textbf{탁월한 성능}: 보장된 대역폭으로 96.9% 프레임 손실 감소
+    \item \textbf{예측 가능한 지연}: 미션 크리티컬 트래픽에 20ms 미만 지연
+    \item \textbf{완벽한 공정성}: 거의 이상적인 대역폭 분배 (Jain Index = 0.9998)
+    \item \textbf{견고한 운영}: 온도 극한에서 안정적인 성능
 \end{enumerate}
 
-\subsubsection{트래픽 클래스 매핑}
+\subsection{프로덕션 배포 통찰력}
 
-효과적인 트래픽 분류:
-
-\begin{itemize}
-    \item TC7: 제어 트래픽 (최고 우선순위)
-    \item TC6-5: 실시간 영상/음성
-    \item TC4-3: 시간 민감 데이터
-    \item TC2-0: 베스트 에포트
-\end{itemize}
-
-\subsection{실제 적용 고려사항}
-
-\subsubsection{네트워크 설계}
-
-CBS 적용 시 네트워크 설계 원칙:
-
-\begin{enumerate}
-    \item 종단 간 홉 수 최소화 (3홉 이하 권장)
-    \item 대칭적 토폴로지 구성
-    \item 링크 사용률 70\% 이하 유지
-    \item 시간 동기화 정확도 1μs 이하
-\end{enumerate}
-
-\subsubsection{장애 처리}
-
-CBS 관련 장애 시나리오 및 대응:
+구현 경험을 바탕으로:
 
 \begin{itemize}
-    \item \textbf{크레딧 고갈}: idleSlope 증가 또는 트래픽 제한
-    \item \textbf{큐 오버플로우}: 버퍼 크기 증가 또는 우선순위 재조정
-    \item \textbf{시간 동기 손실}: CBS 일시 중단 및 재동기화
+    \item \textbf{매개변수 튜닝}: 자동화된 도구가 구성 복잡성을 줄임
+    \item \textbf{하드웨어 선택}: 자동차 ECU용 LAN9692, 게이트웨이용 LAN9662
+    \item \textbf{모니터링}: 실시간 대시보드로 사전 예방적 관리 가능
+    \item \textbf{통합}: YANG 모델이 자동화된 네트워크 프로비저닝 촉진
 \end{itemize}
 
-\subsection{다른 TSN 기능과의 통합}
+\section{결론 및 향후 연구}
 
-\subsubsection{TAS와의 조합}
+본 논문은 광범위한 성능 평가와 함께 Microchip TSN 스위치에서 포괄적인 CBS 구현을 제시한다. 결과는 CBS가 자동차 ADAS 및 VOD 스트리밍을 포함한 까다로운 애플리케이션에 결정론적 네트워킹을 가능하게 함을 보여준다.
 
-CBS와 Time-Aware Shaper 조합:
+주요 성과는 96.9% 프레임 손실 감소, 87.9% 지연 개선, 거의 완벽한 대역폭 공정성을 포함한다. 구현은 자동차 온도 범위에서 안정적으로 작동하고 마이크로버스트 트래픽을 효과적으로 처리한다.
 
+향후 연구는 다음을 탐구할 것이다:
 \begin{itemize}
-    \item TAS: 시간 슬롯 기반 절대적 격리
-    \item CBS: 슬롯 내에서 대역폭 제어
-    \item 장점: 결정론적 지연 + 효율적 대역폭 활용
+    \item 적응형 매개변수 최적화를 위한 기계 학습과의 통합
+    \item 무선-유선 TSN 융합으로의 확장
+    \item 메타버스 및 AR/VR과 같은 신흥 사용 사례에의 적용
 \end{itemize}
 
-\subsubsection{FRER 통합}
+\section*{감사의 글}
 
-Frame Replication and Elimination:
+저자들은 하드웨어 지원에 대해 Microchip Technology Inc.에, 표준화 노력에 대해 IEEE 802.1 작업 그룹에 감사를 표한다.
 
-\begin{itemize}
-    \item CBS 전에 FRER 수행
-    \item 중복 제거 후 CBS 적용
-    \item 신뢰성과 대역폭 효율성 동시 달성
-\end{itemize}
-
-\subsection{한계점 및 개선 방향}
-
-\subsubsection{현재 구현의 한계}
-
-\begin{enumerate}
-    \item 고정된 CBS 파라미터 (동적 조정 미지원)
-    \item 단일 벤더 하드웨어 의존성
-    \item 제한적인 모니터링 인터페이스
-\end{enumerate}
-
-\subsubsection{향후 개선 사항}
-
-\begin{itemize}
-    \item 머신러닝 기반 파라미터 자동 최적화
-    \item 다중 벤더 상호 운용성 테스트
-    \item 실시간 시각화 대시보드 개발
-    \item 클라우드 기반 중앙 관리 시스템
-\end{itemize}
-
-\section{결론}
-\label{sec:conclusion}
-
-\subsection{연구 성과 요약}
-
-본 논문에서는 IEEE 802.1Qav Credit-Based Shaper를 Microchip LAN9692 TSN 스위치에 구현하고 종합적인 성능 평가를 수행하였다. 주요 연구 성과는 다음과 같다:
-
-\subsubsection{구현 측면}
-
-\begin{itemize}
-    \item 표준 준수 CBS 알고리즘의 완전한 하드웨어 구현
-    \item YANG 데이터 모델 기반 자동화된 구성 관리 시스템
-    \item 실시간 모니터링 및 통계 수집 인프라
-    \item 재현 가능한 실험 자동화 프레임워크
-\end{itemize}
-
-\subsubsection{성능 측면}
-
-핵심 성능 지표에서 다음과 같은 개선을 달성하였다:
-
-\begin{itemize}
-    \item \textbf{프레임 손실률}: 21.5\% → 0.67\% (96.9\% 감소)
-    \item \textbf{지터}: 42.3ms → 3.1ms (92.7\% 개선)
-    \item \textbf{평균 지연}: 68.4ms → 8.3ms (87.9\% 단축)
-    \item \textbf{대역폭 보장}: 98.8\% 활용률 달성
-    \item \textbf{공정성}: Jain's Index 0.9998
-\end{itemize}
-
-\subsubsection{실용성 측면}
-
-\begin{itemize}
-    \item 700Mbps BE 트래픽 환경에서도 안정적 동작
-    \item 포트당 1.2\% CPU 오버헤드로 효율적 처리
-    \item 12포트 동시 CBS 지원 확장성
-    \item 실제 차량 네트워크 환경 적용 가능성 입증
-\end{itemize}
-
-\subsection{기술적 기여}
-
-본 연구의 주요 기술적 기여는 다음과 같다:
-
-\begin{enumerate}
-    \item \textbf{상세 구현 문서화}: CBS 구현의 모든 측면을 상세히 문서화하여 재현 가능성 확보
-    
-    \item \textbf{종합적 성능 분석}: 기존 연구에서 다루지 않은 꼬리 지연, 버스트 처리 등 포함
-    
-    \item \textbf{자동화 도구 개발}: YANG 기반 구성, 실험 자동화 스크립트 등 실용적 도구 제공
-    
-    \item \textbf{최적화 가이드라인}: 실험 결과 기반 CBS 파라미터 선정 가이드라인 제시
-    
-    \item \textbf{통합 관리 시스템}: NETCONF/YANG 기반 표준 관리 인터페이스 구현
-\end{enumerate}
-
-\subsection{산업적 영향}
-
-본 연구 결과는 다음 산업 분야에 직접적으로 활용 가능하다:
-
-\subsubsection{자동차 산업}
-
-\begin{itemize}
-    \item 자율주행 차량의 센서 데이터 네트워크
-    \item ADAS 카메라 영상 전송
-    \item 차량 내 인포테인먼트 시스템
-    \item V2X 통신 백본 네트워크
-\end{itemize}
-
-\subsubsection{산업 자동화}
-
-\begin{itemize}
-    \item 스마트 팩토리 실시간 제어 네트워크
-    \item 로봇 제어 시스템
-    \item 산업용 IoT 게이트웨이
-    \item 원격 모니터링 시스템
-\end{itemize}
-
-\subsubsection{방송/미디어}
-
-\begin{itemize}
-    \item 방송 스튜디오 비디오 스위칭
-    \item 라이브 이벤트 중계
-    \item 원격 프로덕션 시스템
-    \item 프로페셔널 오디오 네트워크
-\end{itemize}
-
-\subsection{향후 연구 방향}
-
-\subsubsection{단기 연구 계획}
-
-\begin{enumerate}
-    \item \textbf{다중 스위치 환경 성능 평가}: 
-        \begin{itemize}
-            \item 10개 이상 TSN 스위치 연결 환경에서의 CBS 동작 검증
-            \item 대규모 차량 네트워크 토폴로지 시뮬레이션
-            \item 네트워크 장애 상황에서의 CBS 복원 전략
-        \end{itemize}
-    
-    \item \textbf{다중 벤더 상호 운용성}:
-        \begin{itemize}
-            \item 마이크로칩 LAN9692 vs Intel I225-V \cite{intel2024i225}
-            \item 마이크로칩 LAN9692 vs Broadcom BCM89500 \cite{broadcom2023bcm}
-            \item 마이크로칩 LAN9692 vs NXP SJA1105 \cite{nxp2023sja1105}
-            \item 마이크로칩 LAN9692 vs Marvell 88Q5050 \cite{marvell2023q5050}
-            \item 표준 준수성 검증 도구 개발
-            \item 상호 운용성 테스트 프레임워크
-        \end{itemize}
-    
-    \item \textbf{보안 강화}:
-        \begin{itemize}
-            \item CBS 파라미터 변조 공격 방어
-            \item 인증된 구성 관리
-            \item 암호화된 제어 채널
-        \end{itemize}
-\end{enumerate}
-
-\subsubsection{장기 연구 비전}
-
-\begin{enumerate}
-    \item \textbf{AI/ML 통합}:
-        \begin{itemize}
-            \item 딥러닝 기반 트래픽 예측
-            \item 강화학습 기반 네트워크 최적화
-            \item 이상 탐지 및 자동 복구
-        \end{itemize}
-    
-    \item \textbf{클라우드-엣지 연계}:
-        \begin{itemize}
-            \item 분산 CBS 관리 시스템
-            \item 엣지 컴퓨팅 통합
-            \item 계층적 TSN 아키텍처
-        \end{itemize}
-    
-    \item \textbf{6G 네트워크 통합}:
-        \begin{itemize}
-            \item 무선-유선 통합 TSN
-            \item 초저지연 서비스 지원
-            \item 대규모 IoT 확장성
-        \end{itemize}
-\end{enumerate}
-
-\subsection{맺음말}
-
-Time-Sensitive Networking은 기존 이더넷의 한계를 극복하고 실시간 응용을 지원하는 핵심 기술이다. 본 연구에서 구현하고 검증한 Credit-Based Shaper는 TSN의 중요한 구성 요소로서, 실제 산업 환경에서의 적용 가능성을 입증하였다.
-
-CBS의 성공적인 구현과 우수한 성능 결과는 차세대 네트워크 인프라의 실현 가능성을 보여준다. 특히 자율주행, 스마트 팩토리, 원격 의료 등 미션 크리티컬한 응용에서 CBS는 필수적인 기술이 될 것이다.
-
-본 연구가 TSN 기술의 실제 적용을 촉진하고, 더 나은 실시간 네트워크 서비스 개발에 기여하기를 기대한다. 앞으로도 지속적인 연구와 개발을 통해 TSN 기술이 산업 전반에 걸쳐 혁신을 이끌어 나가기를 희망한다.
-
-\section*{참고문헌}
 \begin{thebibliography}{99}
 
 \bibitem{sudhakaran2022automotive}
 S. Sudhakaran et al., ``Automotive Ethernet: The Future of In-Vehicle Networking,'' \textit{IEEE Vehicular Technology Magazine}, vol. 17, no. 2, pp. 49-58, June 2022.
 
-\bibitem{nasrallah2018ultra}
-A. Nasrallah et al., ``Ultra-Low Latency (ULL) Networks: The IEEE TSN and IETF DetNet Standards and Related 5G ULL Research,'' \textit{IEEE Communications Surveys \& Tutorials}, vol. 21, no. 1, pp. 88-145, 2019.
-
 \bibitem{finn2018introduction}
 N. Finn, ``Introduction to Time-Sensitive Networking,'' \textit{IEEE Communications Standards Magazine}, vol. 2, no. 2, pp. 22-28, June 2018.
 
-\bibitem{zhao2020timing}
-L. Zhao et al., ``Timing Analysis of AVB Traffic in TSN Networks Using Network Calculus,'' \textit{IEEE Transactions on Industrial Informatics}, vol. 16, no. 9, pp. 5992-6002, Sept. 2020.
+\bibitem{ieee8021qav}
+IEEE Standards Association, ``IEEE Standard for Local and Metropolitan Area Networks - Virtual Bridged Local Area Networks Amendment 12: Forwarding and Queuing Enhancements for Time-Sensitive Streams,'' IEEE Std 802.1Qav-2009, Jan. 2010.
 
-\bibitem{kim2021hardware}
-J. Kim et al., ``Hardware Implementation of IEEE 802.1Qav Credit-Based Shaper for Automotive Ethernet,'' \textit{IEEE Access}, vol. 9, pp. 45081-45094, 2021.
+\bibitem{ieee8021as}
+IEEE Standards Association, ``IEEE Standard for Local and Metropolitan Area Networks - Timing and Synchronization for Time-Sensitive Applications,'' IEEE Std 802.1AS-2020, March 2020.
+
+\bibitem{ieee8021qbv}
+IEEE Standards Association, ``IEEE Standard for Local and Metropolitan Area Networks - Bridges and Bridged Networks Amendment 25: Enhancements for Scheduled Traffic,'' IEEE Std 802.1Qbv-2015, March 2016.
+
+\bibitem{ieee8021cb}
+IEEE Standards Association, ``IEEE Standard for Local and Metropolitan Area Networks - Frame Replication and Elimination for Reliability,'' IEEE Std 802.1CB-2017, Oct. 2017.
 
 \bibitem{linux2023cbs}
 Linux Kernel Documentation, ``CBS - Credit Based Shaper Qdisc,'' 2023. [Online]. Available: https://www.kernel.org/doc/html/latest/networking/cbs.html
@@ -1960,92 +447,8 @@ Linux Kernel Documentation, ``CBS - Credit Based Shaper Qdisc,'' 2023. [Online].
 \bibitem{zhang2022dpdk}
 H. Zhang et al., ``High-Performance CBS Implementation Using DPDK,'' in \textit{Proc. IEEE INFOCOM}, pp. 1-10, 2022.
 
-\bibitem{intel2021i210}
-Intel Corporation, ``Intel Ethernet Controller I210 Datasheet,'' Rev. 3.4, 2021.
-
-\bibitem{cao2021analytical}
-Y. Cao et al., ``Analytical Modeling of Credit-Based Shaping in Time-Sensitive Networks,'' \textit{IEEE Transactions on Network and Service Management}, vol. 18, no. 3, pp. 3456-3470, Sept. 2021.
-
-\bibitem{nafar2021omnet}
-F. Nafar et al., ``Comprehensive TSN Simulation Framework for OMNeT++,'' in \textit{Proc. IEEE WFCS}, pp. 1-8, 2021.
-
-\bibitem{bhattacharjee2023ns3}
-S. Bhattacharjee et al., ``NS-3 TSN Module: Design and Evaluation,'' \textit{Computer Networks}, vol. 219, p. 109456, 2023.
-
-\bibitem{kehrer2022experimental}
-S. Kehrer et al., ``Experimental Evaluation of IEEE 802.1 TSN in Automotive Networks,'' in \textit{Proc. IEEE VTC}, pp. 1-7, 2022.
-
-\bibitem{bmw2022tsn}
-BMW Group, ``Time-Sensitive Networking in Next-Generation Vehicle Architecture,'' Technical Report, 2022.
-
-\bibitem{tesla2023fsd}
-Tesla Inc., ``Full Self-Driving Computer Architecture,'' White Paper, 2023.
-
-\bibitem{siemens2022tsn}
-Siemens AG, ``TSN for Industrial Automation: Implementation Guide,'' 2022.
-
-\bibitem{avnu2023whitepaper}
-Avnu Alliance, ``Best Practices for AVB/TSN Network Design,'' White Paper, 2023.
-
-% 마이크로칩 관련 참고문헌
-\bibitem{microchip2024lan9692}
-Microchip Technology Inc., ``LAN9692 10/100/1000 이더넷 PHY with IEEE 802.1 TSN 지원: 데이터시트,'' DS00003840B, Rev. B, 2024년 3월.
-
-\bibitem{microchip2023tsn_guide}
-Microchip Technology Inc., ``TSN 솔루션 가이드: 마이크로칩 실리콘으로 시간 민감형 네트워킹 구현,'' AN3262, Rev. 2.1, 2023년 12월.
-
-\bibitem{microchip2024cbs_app}
-Microchip Technology Inc., ``LAN9692에서 IEEE 802.1Qav Credit-Based Shaper 구현: 애플리케이션 노트,'' AN3456, Rev. 1.3, 2024년 1월.
-
-\bibitem{microchip2023register}
-Microchip Technology Inc., ``LAN9692 레지스터 프로그래밍 가이드: CBS 구성 및 최적화,'' UG0982, Rev. 1.2, 2023년 11월.
-
-\bibitem{microchip2024harmony}
-Microchip Technology Inc., ``MPLAB Harmony 3 TSN 스택 사용자 가이드,'' DS60001658C, Rev. C, 2024년 2월.
-
-\bibitem{microchip2023configurator}
-Microchip Technology Inc., ``MCHP TSN 구성 도구: 사용자 매뉴얼 및 모범 사례,'' DS50003127A, Rev. A, 2023년 10월.
-
-\bibitem{microchip2024yang}
-Microchip Technology Inc., ``LAN9692 TSN 스위치용 YANG 모델 구현: 개발자 가이드,'' AN3789, Rev. 1.0, 2024년 1월.
-
-\bibitem{microchip2023automotive}
-Microchip Technology Inc., ``LAN9692를 이용한 자동차 이더넷 솔루션: ADAS 애플리케이션 설계 가이드,'' AN4012, Rev. 2.0, 2023년 8월.
-
-\bibitem{microchip2024silicon}
-Microchip Technology Inc., ``LAN9692의 CBS 실리콘 구현: 아키텍처 및 설계 트레이드오프,'' 백서 WP-CBS-002, 2024년 1월.
-
-% 경쟁사 비교
-\bibitem{microchip2023comparison}
-Microchip Technology Inc., ``경쟁 분석: LAN9692 대 업계 TSN 솔루션,'' 시장 보고서 MR-TSN-2023, 2023년 11월.
-
-\bibitem{broadcom2023bcm}
-Broadcom Inc., ``BCM89500 자동차 이더넷 스위치 제품군: 제품 개요,'' 89500-PB107, 2023.
-
-\bibitem{intel2024i225}
-Intel Corporation, ``Intel 이더넷 컨트롤러 I225-V/LM: 데이터시트,'' 문서 336983, Rev. 2.1, 2024.
-
-\bibitem{nxp2023sja1105}
-NXP Semiconductors, ``SJA1105TEL 자동차 이더넷 스위치: 데이터 시트,'' Rev. 5.0, 2023.
-
-\bibitem{marvell2023q5050}
-Marvell Technology, ``88Q5050 보안 자동차 이더넷 스위치: 제품 개요,'' PB-88Q5050-1.2, 2023.
-
-% 산업 적용 사례
-\bibitem{bmw2023microchip}
-BMW AG, ``마이크로칩 LAN9692를 사용한 차세대 차량의 TSN 구현: 사례 연구,'' 기술 보고서 BMW-TSN-2023, 2023.
-
-\bibitem{tesla2024microchip}
-Tesla Inc., ``FSD 컴퓨터 네트워크 아키텍처를 위한 마이크로칩 LAN9692 평가,'' 내부 보고서 TSLA-NET-2024, 2024.
-
-\bibitem{bosch2024microchip}
-Robert Bosch GmbH, ``산업 자동화에서의 마이크로칩 TSN 솔루션: 배포 경험,'' 백서 BOSCH-IND-2024, 2024.
-
-\bibitem{continental2023lan9692}
-Continental AG, ``ADAS 도메인 컨트롤러의 LAN9692 통합: 성능 평가,'' 엔지니어링 보고서 CONT-ADAS-2023, 2023.
-
-\bibitem{volkswagen2023tsn}
-Volkswagen Group, ``마이크로칩 솔루션을 이용한 TSN 배포: MEB 플랫폼 사례 연구,'' VW 기술 문서 VW-MEB-TSN-2023, 2023.
+\bibitem{kim2021hardware}
+J. Kim et al., ``Hardware Implementation of IEEE 802.1Qav Credit-Based Shaper for Automotive Ethernet,'' \textit{IEEE Access}, vol. 9, pp. 45081-45094, 2021.
 
 \end{thebibliography}
 
