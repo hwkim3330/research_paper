@@ -121,12 +121,12 @@ class CBSCalculator:
         }
     }
     
-    def __init__(self, link_speed_mbps: float = 10000):
+    def __init__(self, link_speed_mbps: float = 1000):
         """
-        Initialize CBS Calculator for high-speed networks
+        Initialize CBS Calculator for Gigabit Ethernet networks
         
         Args:
-            link_speed_mbps: Link speed in Mbps (default: 10000 for 10 GbE)
+            link_speed_mbps: Link speed in Mbps (default: 1000 for 1 GbE)
         """
         self.link_speed_mbps = link_speed_mbps
         self.link_speed_bps = link_speed_mbps * 1_000_000
@@ -694,10 +694,10 @@ class CBSCalculator:
 
 
 def example_autonomous_vehicle():
-    """Next-generation autonomous vehicle example with 10 GbE"""
+    """Automotive ADAS example with 1 Gigabit Ethernet"""
     
-    # Create CBS calculator for 10 Gigabit network
-    calculator = CBSCalculator(link_speed_mbps=10000)
+    # Create CBS calculator for 1 Gigabit network
+    calculator = CBSCalculator(link_speed_mbps=1000)
     
     # 스트림 정의
     streams = [
@@ -705,54 +705,45 @@ def example_autonomous_vehicle():
         StreamConfig("Emergency_Brake", TrafficType.SAFETY_CRITICAL, 2, 100, "N/A", 7, 5, 0.5),
         StreamConfig("Steering_Control", TrafficType.SAFETY_CRITICAL, 1, 100, "N/A", 7, 5, 0.5),
         
-        # Multiple 4K cameras for Level 5 autonomy
-        StreamConfig("Front_Center_4K", TrafficType.VIDEO_4K, 50, 60, "3840x2160", 6, 10, 1.5),
-        StreamConfig("Front_Left_4K", TrafficType.VIDEO_4K, 50, 60, "3840x2160", 6, 10, 1.5),
-        StreamConfig("Front_Right_4K", TrafficType.VIDEO_4K, 50, 60, "3840x2160", 6, 10, 1.5),
-        StreamConfig("Front_Wide_4K", TrafficType.VIDEO_4K, 50, 60, "3840x2160", 6, 10, 1.5),
-        StreamConfig("Rear_Center_4K", TrafficType.VIDEO_4K, 50, 60, "3840x2160", 6, 10, 1.5),
-        StreamConfig("Side_Left_4K", TrafficType.VIDEO_4K, 50, 60, "3840x2160", 6, 10, 1.5),
-        StreamConfig("Side_Right_4K", TrafficType.VIDEO_4K, 50, 60, "3840x2160", 6, 10, 1.5),
-        
-        # 8K streams for critical perception
-        StreamConfig("Main_Perception_8K", TrafficType.VIDEO_4K, 800, 30, "7680x4320", 7, 8, 1.0),
-        StreamConfig("Emergency_Detection_8K", TrafficType.VIDEO_4K, 800, 30, "7680x4320", 7, 8, 1.0),
+        # Multiple cameras for ADAS
+        StreamConfig("Front_Camera_1080p", TrafficType.VIDEO_1080P, 25, 30, "1920x1080", 6, 10, 1.5),
+        StreamConfig("Rear_Camera_1080p", TrafficType.VIDEO_1080P, 25, 30, "1920x1080", 6, 10, 1.5),
+        StreamConfig("Left_Camera_720p", TrafficType.VIDEO_720P, 8, 30, "1280x720", 5, 15, 2.0),
+        StreamConfig("Right_Camera_720p", TrafficType.VIDEO_720P, 8, 30, "1280x720", 5, 15, 2.0),
         
         
-        # High-resolution sensor data for 10 GbE
-        StreamConfig("Lidar_Main_128Ch", TrafficType.LIDAR, 500, 20, "N/A", 4, 5, 0.5),
-        StreamConfig("Lidar_Secondary_64Ch", TrafficType.LIDAR, 250, 20, "N/A", 4, 5, 0.5),
-        StreamConfig("Radar_Fusion_Array", TrafficType.RADAR, 80, 100, "N/A", 3, 2, 0.2),
-        StreamConfig("Ultrasonic_Array", TrafficType.RADAR, 20, 200, "N/A", 3, 10, 1.0),
+        # Sensor data for 1 GbE
+        StreamConfig("Lidar_Main", TrafficType.LIDAR, 100, 20, "N/A", 4, 5, 0.5),
+        StreamConfig("Radar_Front", TrafficType.RADAR, 10, 100, "N/A", 3, 2, 0.2),
+        StreamConfig("Ultrasonic_Sensors", TrafficType.RADAR, 5, 200, "N/A", 3, 10, 1.0),
         
         # V2X
-        StreamConfig("V2X_Safety", TrafficType.V2X, 10, 10, "N/A", 2, 100, 10),
+        StreamConfig("V2X_Communication", TrafficType.V2X, 5, 10, "N/A", 2, 100, 10),
         
-        # Next-gen infotainment for 10 GbE
-        StreamConfig("Infotainment_8K", TrafficType.INFOTAINMENT, 400, 60, "7680x4320", 1, 100, 10),
-        StreamConfig("Passenger_Displays", TrafficType.INFOTAINMENT, 200, 60, "4K Multi", 1, 100, 10),
+        # Infotainment for 1 GbE
+        StreamConfig("Infotainment_HD", TrafficType.INFOTAINMENT, 20, 30, "1920x1080", 1, 100, 10),
         
-        # 진단
-        StreamConfig("Diagnostics", TrafficType.DIAGNOSTICS, 5, 1, "N/A", 0, 1000, 100),
+        # Diagnostics
+        StreamConfig("Diagnostics", TrafficType.DIAGNOSTICS, 2, 1, "N/A", 0, 1000, 100),
     ]
     
     print("=" * 80)
-    print("Next-Generation Level 5 Autonomous Vehicle - 10 GbE CBS Parameters")
+    print("Automotive ADAS System - 1 Gigabit Ethernet CBS Parameters")
     print("=" * 80)
     
     # 전체 트래픽 분석
     total_bitrate = sum(s.bitrate_mbps for s in streams)
     print(f"\nTotal Traffic: {total_bitrate:.1f} Mbps")
-    print(f"Link Speed: {calculator.link_speed_mbps} Mbps (10 Gigabit Ethernet)")
+    print(f"Link Speed: {calculator.link_speed_mbps} Mbps (1 Gigabit Ethernet)")
     print(f"Base Utilization: {(total_bitrate/calculator.link_speed_mbps)*100:.1f}%")
     
     # CBS 파라미터 계산
-    print("\nCalculating optimized CBS parameters for 10 GbE...")
-    params = calculator.optimize_parameters(streams, target_utilization=85)
+    print("\nCalculating optimized CBS parameters for 1 GbE...")
+    params = calculator.optimize_parameters(streams, target_utilization=75)
     
     # 결과 출력
     print("\n" + "=" * 80)
-    print("CBS Parameters (Priority Order) - 10 Gigabit Ethernet")
+    print("CBS Parameters (Priority Order) - 1 Gigabit Ethernet")
     print("=" * 80)
     
     # 우선순위별로 정렬하여 출력
@@ -776,17 +767,17 @@ def example_autonomous_vehicle():
     total_utilization = (total_reserved / calculator.link_speed_mbps) * 100
     
     print("\n" + "=" * 80)
-    print("10 Gigabit Network Statistics")
+    print("1 Gigabit Network Statistics")
     print("=" * 80)
     print(f"Total Reserved Bandwidth: {total_reserved:.1f} Mbps")
     print(f"Network Utilization: {total_utilization:.1f}%")
     print(f"Available Bandwidth: {calculator.link_speed_mbps - total_reserved:.1f} Mbps")
     print(f"Concurrent Streams Supported: {len(streams)}")
-    print(f"Maximum 4K Streams: ~{int((calculator.link_speed_mbps * 0.8) / 50)}")
-    print(f"Maximum 8K Streams: ~{int((calculator.link_speed_mbps * 0.8) / 800)}")
+    print(f"Maximum HD (1080p) Streams: ~{int((calculator.link_speed_mbps * 0.8) / 25)}")
+    print(f"Maximum 4K Streams: ~{int((calculator.link_speed_mbps * 0.8) / 100)}")
     
-    # Generate configuration files for 10 GbE deployment
-    calculator.generate_config_file(streams, "autonomous_vehicle_10gbe_cbs.yaml")
+    # Generate configuration files for 1 GbE deployment
+    calculator.generate_config_file(streams, "autonomous_vehicle_1gbe_cbs.yaml")
     
     # 검증
     warnings = calculator.validate_configuration(params)
@@ -795,7 +786,7 @@ def example_autonomous_vehicle():
         for warning in warnings:
             print(f"  - {warning}")
     else:
-        print("\n✅ All validations passed - Ready for 10 GbE production deployment")
+        print("\n✅ All validations passed - Ready for 1 GbE production deployment")
 
 
 if __name__ == "__main__":

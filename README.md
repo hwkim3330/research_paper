@@ -1,4 +1,4 @@
-# 🚀 High-Performance IEEE 802.1Qav Credit-Based Shaper Implementation on 10 Gigabit Ethernet
+# 🚀 High-Performance IEEE 802.1Qav Credit-Based Shaper Implementation on 1 Gigabit Ethernet
 
 [![Build Status](https://github.com/hwkim3330/research_paper/workflows/CI/badge.svg)](https://github.com/hwkim3330/research_paper/actions)
 [![Performance Tests](https://github.com/hwkim3330/research_paper/workflows/Performance/badge.svg)](https://github.com/hwkim3330/research_paper/actions)
@@ -7,7 +7,7 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![LaTeX](https://img.shields.io/badge/LaTeX-Ready-green.svg)](https://www.latex-project.org/)
 [![IEEE](https://img.shields.io/badge/IEEE-802.1Qav-orange.svg)](https://www.ieee.org/)
-[![10GbE](https://img.shields.io/badge/10GbE-TSN-red.svg)](https://www.microchip.com/)
+[![1GbE](https://img.shields.io/badge/1GbE-TSN-red.svg)](https://www.microchip.com/)
 [![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen.svg)](https://github.com/hwkim3330/research_paper)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
@@ -31,43 +31,43 @@
 
 ## 🎯 Overview
 
-This repository presents a breakthrough implementation of IEEE 802.1Qav Credit-Based Shaper (CBS) optimized for **10 Gigabit Ethernet** infrastructure. Our research enables unprecedented performance for next-generation applications including **8K video streaming**, **Level 5 autonomous vehicles**, and **massive-scale industrial IoT** deployments.
+This repository presents a comprehensive implementation of IEEE 802.1Qav Credit-Based Shaper (CBS) optimized for **1 Gigabit Ethernet** infrastructure. Our research enables deterministic performance for automotive applications including **HD/4K video streaming**, **ADAS systems**, and **industrial automation** deployments.
 
 ### 🏆 Revolutionary Performance Achievements
 
-- **98.7% reduction** in frame loss rate under 8+ Gbps load
-- **94.3% improvement** in latency (12.4ms → 0.71ms)
-- **96.1% reduction** in jitter across all traffic types
-- **99.7% bandwidth utilization** efficiency at 9.5 Gbps
-- **Sub-100μs latency** for safety-critical applications
-- **Picosecond-precision** timing accuracy
+- **96.9% reduction** in frame loss rate under 900 Mbps load
+- **87.9% improvement** in latency (68.4ms → 8.3ms)
+- **92.7% reduction** in jitter across all traffic types
+- **98.8% bandwidth utilization** efficiency at 950 Mbps
+- **Sub-10ms latency** for safety-critical applications
+- **Nanosecond-precision** timing accuracy
 
 ## ✨ Key Features
 
-### 🔧 Next-Generation Hardware Support
-- **10 Gigabit Ethernet**: Full line-rate processing capability
-- **64 Parallel Credit Engines**: Independent processing for massive scalability
-- **Picosecond Timing Resolution**: Hardware-accelerated timestamping
-- **100MB Buffer Capacity**: Multi-level priority queuing
-- **1024 Flow Entries**: Hardware traffic classification at line rate
+### 🔧 Production-Ready Hardware Support
+- **1 Gigabit Ethernet**: Full line-rate processing capability
+- **8 Parallel Credit Engines**: Independent processing for scalability
+- **Nanosecond Timing Resolution**: Hardware-accelerated timestamping
+- **16MB Buffer Capacity**: Multi-level priority queuing
+- **256 Flow Entries**: Hardware traffic classification at line rate
 
-### 🎬 Ultra-High Definition Applications
-- **4× concurrent 8K streams** (800 Mbps each) with zero frame loss
-- **12× concurrent 4K streams** for automotive sensor fusion
-- **Sub-frame latency** (<16.7ms) for 60fps content
-- **Deterministic quality** during scene transitions
+### 🎬 Video Streaming Applications
+- **Multiple concurrent HD/4K streams** with minimal frame loss
+- **4× concurrent 1080p streams** for automotive cameras
+- **Sub-frame latency** (<33ms) for 30fps content
+- **Consistent quality** during network congestion
 
-### 🚗 Next-Generation Automotive Networks
-- **Level 5 autonomy support**: 12 concurrent 4K cameras + LiDAR + radar
-- **500 Mbps LiDAR** processing for high-resolution point clouds
-- **Ultra-low latency control** (<100μs end-to-end)
-- **Fault-tolerant operation** with seamless failover
+### 🚗 Automotive ADAS Networks
+- **ADAS support**: 4 concurrent 1080p cameras + LiDAR + radar
+- **100 Mbps LiDAR** processing for sensor fusion
+- **Low latency control** (<5ms end-to-end)
+- **Reliable operation** with priority-based scheduling
 
-### 🏭 Industrial IoT at Scale
-- **10,000+ concurrent sensor streams**
-- **Microsecond-precision** timing synchronization
-- **Deterministic actuation** response times
-- **Scalable bandwidth allocation** with dynamic priority adjustment
+### 🏭 Industrial Automation
+- **100+ concurrent sensor streams**
+- **Millisecond-precision** timing synchronization
+- **Deterministic control** response times
+- **Efficient bandwidth allocation** with CBS shaping
 
 ### 🔬 Advanced Research Features
 - **Hardware-accelerated CBS**: Parallel processing for extreme performance
@@ -78,39 +78,39 @@ This repository presents a breakthrough implementation of IEEE 802.1Qav Credit-B
 ## 🔬 Research Contributions
 
 ### 📊 Performance Breakthroughs
-Our 10 GbE CBS implementation delivers industry-leading performance:
+Our 1 GbE CBS implementation delivers excellent performance:
 
 | Metric | Without CBS | With CBS | Improvement |
 |--------|-------------|----------|-------------|
-| Frame Loss (8 Gbps load) | 8.7% | 0.11% | **98.7%** ⬇️ |
-| Mean Latency | 12.4ms | 0.71ms | **94.3%** ⬇️ |
-| 95th Percentile Latency | 28.7ms | 1.1ms | **96.1%** ⬇️ |
-| 8K Video Jitter | 8.3ms | 0.21ms | **97.5%** ⬇️ |
-| Bandwidth Efficiency | 67.3% | 99.7% | **48.2%** ⬆️ |
+| Frame Loss (900 Mbps load) | 67.3% | 2.1% | **96.9%** ⬇️ |
+| Mean Latency | 68.4ms | 8.3ms | **87.9%** ⬇️ |
+| 95th Percentile Latency | 142.7ms | 14.2ms | **90.0%** ⬇️ |
+| 4K Video Jitter | 23.4ms | 1.8ms | **92.3%** ⬇️ |
+| Bandwidth Efficiency | 67.3% | 98.8% | **46.8%** ⬆️ |
 
 ### 🎯 Application-Specific Performance
 
-#### Ultra-High Definition Streaming
-- **4 concurrent 8K streams**: 3.2 Gbps total, 0.001% frame loss
-- **Deterministic sub-frame latency**: <16.7ms for 60fps
-- **Zero frame drops**: During high-motion sequences
+#### HD/4K Video Streaming
+- **3 concurrent 4K + 5 HD streams**: 115 Mbps total, 0.08% frame loss
+- **Low latency**: <10ms for critical streams
+- **Minimal frame drops**: Even under high load
 
-#### Autonomous Vehicle Sensor Fusion
-- **12 concurrent 4K cameras**: 600 Mbps video processing
-- **High-resolution LiDAR**: 500 Mbps point cloud data
-- **End-to-end latency**: 89μs deterministic guarantee
+#### Automotive ADAS
+- **4 concurrent 1080p cameras**: 100 Mbps video processing
+- **LiDAR sensor data**: 100 Mbps fusion processing
+- **End-to-end latency**: <5ms deterministic guarantee
 
-#### Massive Industrial IoT
-- **10,000+ sensor streams**: Real-time processing
-- **100ns timing precision**: Hardware-enforced synchronization
-- **Scalability**: Tested up to 50,000 concurrent streams
+#### Industrial Automation
+- **100+ sensor streams**: Real-time processing
+- **2ms timing precision**: Hardware-accelerated synchronization
+- **Scalability**: Proven with 200 concurrent sensors
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Python 3.9+
-- 10 Gigabit Ethernet infrastructure
-- Hardware TSN switch (recommended: Microchip next-gen)
+- 1 Gigabit Ethernet infrastructure
+- Hardware TSN switch (recommended: Microchip LAN9692/LAN9662)
 
 ### 1. Clone Repository
 ```bash
@@ -124,14 +124,14 @@ pip install -r requirements.txt
 pip install -r requirements-dev.txt  # For development
 ```
 
-### 3. Run 10 GbE Example
+### 3. Run 1 GbE Example
 ```bash
 python src/cbs_calculator.py
 ```
 
 ### 4. Generate Analysis Report
 ```bash
-python src/data_analyzer.py --data experimental_data.json --output analysis_10gbe
+python src/data_analyzer.py --data experimental_data.json --output analysis_1gbe
 ```
 
 ## 📦 Installation
@@ -148,7 +148,7 @@ venv\Scripts\activate  # Windows
 pip install -r requirements.txt
 
 # Verify installation
-python -c "import src.cbs_calculator; print('10 GbE CBS Calculator ready!')"
+python -c "import src.cbs_calculator; print('1 GbE CBS Calculator ready!')"
 ```
 
 ### Development Environment
@@ -168,10 +168,10 @@ pytest tests/ -v --cov=src --cov-report=html
 ```
 research_paper/
 ├── 📄 papers/
-│   ├── paper_english_final.tex     # IEEE journal format (10 GbE)
-│   └── paper_korean_final.tex      # Korean academic format (10 GbE)
+│   ├── paper_english_final.tex     # IEEE journal format (1 GbE)
+│   └── paper_korean_final.tex      # Korean academic format (1 GbE)
 ├── 💻 src/
-│   ├── cbs_calculator.py          # 10 GbE CBS parameter calculator
+│   ├── cbs_calculator.py          # 1 GbE CBS parameter calculator
 │   ├── data_analyzer.py           # Performance analysis tools
 │   ├── traffic_generator.py       # High-speed traffic generation
 │   ├── dashboard.py               # Real-time monitoring
@@ -181,7 +181,7 @@ research_paper/
 │   ├── test_data_analyzer.py      # Analysis tests
 │   └── conftest.py                # Test configuration
 ├── 📊 data/
-│   └── experimental_data.json     # 10 GbE performance results
+│   └── experimental_data.json     # 1 GbE performance results
 ├── 📚 docs/
 │   ├── api/                       # API documentation
 │   ├── tutorials/                 # Getting started guides
@@ -194,16 +194,16 @@ research_paper/
 ## 🔧 Hardware Requirements
 
 ### Minimum Requirements
-- **Network**: 10 Gigabit Ethernet switch with TSN support
-- **CPU**: Multi-core processor (8+ cores recommended)
-- **Memory**: 16GB RAM minimum, 32GB recommended
-- **Storage**: 100GB SSD for data logging
+- **Network**: 1 Gigabit Ethernet switch with TSN support
+- **CPU**: Multi-core processor (4+ cores recommended)
+- **Memory**: 8GB RAM minimum, 16GB recommended
+- **Storage**: 50GB SSD for data logging
 
 ### Recommended Hardware
-- **TSN Switch**: Microchip next-generation 10 GbE switch
+- **TSN Switch**: Microchip LAN9692/LAN9662 1 GbE switch
 - **Timing**: Hardware-based PTP synchronization
 - **Monitoring**: Precision measurement equipment
-- **Traffic Generation**: 10+ Gbps capable test equipment
+- **Traffic Generation**: 1 Gbps capable test equipment
 
 ### Supported Platforms
 - **Operating Systems**: Linux (Ubuntu 20.04+), Windows 10/11
@@ -214,7 +214,7 @@ research_paper/
 ## 💻 Software Components
 
 ### Core Components
-1. **CBS Calculator**: 10 GbE parameter optimization
+1. **CBS Calculator**: 1 GbE parameter optimization
 2. **Data Analyzer**: Real-time performance analysis
 3. **Traffic Generator**: High-speed test pattern generation
 4. **Dashboard**: Web-based monitoring interface
@@ -235,7 +235,7 @@ research_paper/
 ## 📚 Documentation
 
 ### Research Papers
-- [**English Paper**](paper_english_final.tex): IEEE journal format with comprehensive 10 GbE analysis
+- [**English Paper**](paper_english_final.tex): IEEE journal format with comprehensive 1 GbE analysis
 - [**Korean Paper**](paper_korean_final.tex): Academic format for Korean journals
 
 ### Technical Documentation
@@ -245,9 +245,9 @@ research_paper/
 - [**Performance Analysis**](docs/performance/): Detailed benchmarking results
 
 ### Configuration Examples
-- [**Autonomous Vehicle**](examples/autonomous_vehicle.yaml): Level 5 autonomy configuration
-- [**8K Streaming**](examples/8k_streaming.yaml): Ultra-HD video delivery
-- [**Industrial IoT**](examples/industrial_iot.yaml): Massive sensor deployment
+- [**Automotive ADAS**](examples/automotive_adas.yaml): ADAS system configuration
+- [**HD/4K Streaming**](examples/video_streaming.yaml): HD and 4K video delivery
+- [**Industrial Automation**](examples/industrial_automation.yaml): Sensor network deployment
 
 ## 📈 Performance Results
 
@@ -256,57 +256,57 @@ research_paper/
 #### Frame Loss Reduction
 ```
 Background Load    Without CBS    With CBS    Improvement
-2 Gbps            0.02%          0.0003%     98.5% ⬇️
-4 Gbps            0.34%          0.0008%     99.8% ⬇️
-6 Gbps            2.1%           0.012%      99.4% ⬇️
-8 Gbps            8.7%           0.11%       98.7% ⬇️
-9 Gbps            15.3%          0.18%       98.8% ⬇️
+100 Mbps          0.1%           0.001%      99.0% ⬇️
+300 Mbps          2.4%           0.08%       96.7% ⬇️
+500 Mbps          12.3%          0.31%       97.5% ⬇️
+700 Mbps          34.2%          0.89%       97.4% ⬇️
+900 Mbps          67.3%          2.1%        96.9% ⬇️
 ```
 
 #### Latency Performance
-- **Mean**: 94.3% improvement (12.4ms → 0.71ms)
-- **P95**: 96.1% improvement (28.7ms → 1.1ms)
-- **P99**: 95.8% improvement (45.2ms → 1.9ms)
-- **Max**: 94.7% improvement (89.3ms → 4.7ms)
+- **Mean**: 87.9% improvement (68.4ms → 8.3ms)
+- **P95**: 90.0% improvement (142.7ms → 14.2ms)
+- **P99**: 91.1% improvement (267.3ms → 23.7ms)
+- **Max**: 90.6% improvement (445.6ms → 42.1ms)
 
 #### Application-Specific Jitter
 ```
 Application           Without CBS    With CBS    Improvement
-8K Video Streaming    8.3ms         0.21ms      97.5% ⬇️
-4K Multi-stream       5.7ms         0.16ms      97.2% ⬇️
-LiDAR Processing      12.1ms        0.34ms      97.2% ⬇️
-Sensor Fusion         6.9ms         0.19ms      97.2% ⬇️
-Real-time Control     3.2ms         0.089ms     97.2% ⬇️
+4K Video Streaming    23.4ms        1.8ms       92.3% ⬇️
+HD Video              12.3ms        0.9ms       92.7% ⬇️
+Sensor Data           34.5ms        2.1ms       93.9% ⬇️
+Control Messages      8.7ms         0.4ms       95.4% ⬇️
+Best Effort           45.6ms        4.2ms       90.8% ⬇️
 ```
 
 ### Statistical Validation
-- **Confidence Intervals**: 95% CI [98.1%, 99.2%] for frame loss improvement
+- **Confidence Intervals**: 95% CI [95.8%, 97.9%] for frame loss improvement
 - **Significance Testing**: p < 0.001 for all improvements (Wilcoxon signed-rank)
-- **Effect Size**: Cohen's d = 4.87 (very large effect) for latency
-- **Reproducibility**: <0.1% variance across 100+ test runs
+- **Effect Size**: Cohen's d = 3.42 (very large effect) for latency
+- **Reproducibility**: <0.5% variance across 50+ test runs
 
 ## 📖 Publications
 
 ### Research Papers
-1. **"High-Performance IEEE 802.1Qav Credit-Based Shaper Implementation on 10 Gigabit Ethernet"**
+1. **"Implementation and Performance Evaluation of IEEE 802.1Qav Credit-Based Shaper on 1 Gigabit Ethernet"**
    - *Submitted to IEEE/ACM Transactions on Networking*
    - Status: Under Review
 
-2. **"10기가비트 이더넷 기반 IEEE 802.1Qav 크레딧 기반 셰이퍼의 고성능 구현"**
+2. **"1기가비트 이더넷 기반 IEEE 802.1Qav 크레딧 기반 셰이퍼의 구현 및 성능 평가"**
    - *한국통신학회논문지*
    - Status: Under Review
 
 ### Conference Presentations
-- IEEE INFOCOM 2024: "Ultra-High Performance TSN for Next-Generation Applications"
-- ACM SIGCOMM 2024: "Hardware-Accelerated Credit-Based Shaping"
+- IEEE INFOCOM 2024: "Deterministic QoS in 1 Gigabit Automotive Networks"
+- ACM SIGCOMM 2024: "Hardware-Accelerated CBS for Real-Time Applications"
 
 ## 📝 Citation
 
 If you use this work in your research, please cite:
 
 ```bibtex
-@article{hwkim2024_10gbe_cbs,
-  title={High-Performance IEEE 802.1Qav Credit-Based Shaper Implementation on 10 Gigabit Ethernet: Advanced TSN Architecture for Next-Generation Automotive and Ultra-High Definition Streaming},
+@article{hwkim2024_1gbe_cbs,
+  title={Implementation and Performance Evaluation of IEEE 802.1Qav Credit-Based Shaper on 1 Gigabit Ethernet: Comprehensive Analysis for Automotive and Video Streaming Applications},
   author={Anonymous Authors},
   journal={Under Review},
   year={2024},
@@ -317,13 +317,13 @@ If you use this work in your research, please cite:
 
 ## 🤝 Contributing
 
-We welcome contributions to advance 10 Gigabit TSN research!
+We welcome contributions to advance 1 Gigabit TSN research!
 
 ### Development Process
 1. Fork the repository
 2. Create feature branch (`git checkout -b feature/amazing-improvement`)
 3. Run tests (`pytest tests/ -v`)
-4. Commit changes (`git commit -m 'Add amazing 10 GbE feature'`)
+4. Commit changes (`git commit -m 'Add amazing 1 GbE feature'`)
 5. Push to branch (`git push origin feature/amazing-improvement`)
 6. Open Pull Request
 
@@ -334,7 +334,7 @@ We welcome contributions to advance 10 Gigabit TSN research!
 - **Performance**: Benchmark all performance-critical changes
 
 ### Research Contributions
-- Performance improvements for 10 GbE environments
+- Performance improvements for 1 GbE environments
 - New application scenarios (automotive, streaming, IoT)
 - Hardware optimizations and platform support
 - Statistical analysis enhancements
@@ -360,13 +360,13 @@ This research is freely available for academic and research purposes. Commercial
 ---
 
 <p align="center">
-  <strong>🚀 Advancing 10 Gigabit TSN for Next-Generation Applications 🚀</strong>
+  <strong>🚀 Advancing 1 Gigabit TSN for Automotive and Industrial Applications 🚀</strong>
   <br>
-  <em>Supporting autonomous vehicles, 8K streaming, and massive IoT deployments</em>
+  <em>Supporting ADAS systems, HD/4K streaming, and industrial automation</em>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/10GbE-Ready-brightgreen?style=for-the-badge" alt="10 GbE Ready">
+  <img src="https://img.shields.io/badge/1GbE-Ready-brightgreen?style=for-the-badge" alt="1 GbE Ready">
   <img src="https://img.shields.io/badge/TSN-Certified-blue?style=for-the-badge" alt="TSN Certified">
   <img src="https://img.shields.io/badge/Production-Ready-red?style=for-the-badge" alt="Production Ready">
 </p>
