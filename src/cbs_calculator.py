@@ -3,6 +3,11 @@
 Credit-Based Shaper (CBS) Parameter Calculator
 Optimized CBS parameter calculation for automotive Ethernet and video streaming applications
 Supports Microchip LAN9692/LAN9662 TSN switches with hardware acceleration
+
+Version: 2.0.0
+Author: Research Team
+License: MIT
+Compatibility: IEEE 802.1Qav-2009, IEEE 802.1Q-2022
 """
 
 import math
@@ -10,13 +15,22 @@ import json
 import yaml
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Tuple, Optional, Any
-from dataclasses import dataclass, asdict
+from typing import Dict, List, Tuple, Optional, Any, Union
+from dataclasses import dataclass, asdict, field
 from enum import Enum
 import logging
 from pathlib import Path
 import time
 import csv
+import warnings
+from datetime import datetime
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 class TrafficType(Enum):
     """Traffic type classification for CBS scheduling"""
@@ -34,7 +48,7 @@ class TrafficType(Enum):
 
 @dataclass
 class StreamConfig:
-    """Stream configuration parameters"""
+    """Stream configuration parameters with validation"""
     name: str
     traffic_type: TrafficType
     bitrate_mbps: float
@@ -43,6 +57,17 @@ class StreamConfig:
     priority: int
     max_latency_ms: float
     max_jitter_ms: float
+    vlan_id: Optional[int] = None
+    dscp: Optional[int] = None
+    
+    def __post_init__(self):
+        """Validate stream configuration"""
+        if not 0 <= self.priority <= 7:
+            raise ValueError(f"Priority must be 0-7, got {self.priority}")
+        if self.bitrate_mbps < 0:
+            raise ValueError(f"Bitrate cannot be negative, got {self.bitrate_mbps}")
+        if self.max_latency_ms <= 0:
+            raise ValueError(f"Max latency must be positive, got {self.max_latency_ms}")
     
 @dataclass
 class CBSParameters:
@@ -133,16 +158,21 @@ class CBSCalculator:
         
     def calculate_cbs_params(self, 
                            stream: StreamConfig,
-                           custom_headroom: float = None) -> CBSParameters:
+                           custom_headroom: Optional[float] = None,
+                           burst_tolerance_factor: float = 1.0) -> CBSParameters:
         """
-        스트림에 대한 CBS 파라미터 계산
+        Calculate CBS parameters for a stream with enhanced accuracy
         
         Args:
-            stream: 스트림 구성
-            custom_headroom: 사용자 정의 헤드룸 (%)
+            stream: Stream configuration
+            custom_headroom: Custom headroom percentage (optional)
+            burst_tolerance_factor: Multiplier for burst tolerance (default 1.0)
             
         Returns:
-            CBS 파라미터
+            CBS parameters optimized for the stream
+        
+        Raises:
+            ValueError: If parameters are out of valid range
         """
         # 트래픽 유형별 기본값 가져오기
         defaults = self.TRAFFIC_DEFAULTS[stream.traffic_type]
@@ -160,12 +190,18 @@ class CBSCalculator:
         # sendSlope 계산
         send_slope = int(idle_slope - self.link_speed_bps)
         
-        # 최대 프레임 크기
+        # Maximum frame size with validation
         max_frame_size = defaults["max_frame_size"]
+        if max_frame_size > 9000:  # Jumbo frame check
+            logger.warning(f"Large frame size {max_frame_size} may impact performance")
         
-        # hiCredit 계산 (버스트 허용량)
-        burst_factor = defaults["burst_factor"]
+        # hiCredit calculation with burst tolerance
+        burst_factor = defaults["burst_factor"] * burst_tolerance_factor
         hi_credit = int((max_frame_size * 8 * idle_slope * burst_factor) / self.link_speed_bps)
+        
+        # Ensure minimum credit for small streams
+        min_credit = max_frame_size * 8  # At least one frame
+        hi_credit = max(hi_credit, min_credit)
         
         # loCredit 계산
         lo_credit = int((max_frame_size * 8 * send_slope) / self.link_speed_bps)
@@ -197,15 +233,20 @@ class CBSCalculator:
         results = {}
         total_reserved = 0
         
-        # 우선순위 순으로 정렬
+        # Sort by priority (higher priority first)
         sorted_streams = sorted(streams, key=lambda x: x.priority, reverse=True)
+        
+        logger.info(f"Calculating CBS for {len(streams)} streams")
         
         for stream in sorted_streams:
             # 남은 대역폭 확인
             remaining_bw = self.link_speed_mbps - total_reserved
             
-            if remaining_bw < stream.bitrate_mbps * 1.1:  # 최소 10% 여유 필요
-                print(f"경고: {stream.name}에 대한 대역폭 부족 (남은: {remaining_bw:.1f} Mbps)")
+            if remaining_bw < stream.bitrate_mbps * 1.1:  # Minimum 10% headroom needed
+                logger.warning(
+                    f"Insufficient bandwidth for {stream.name} "
+                    f"(remaining: {remaining_bw:.1f} Mbps, needed: {stream.bitrate_mbps * 1.1:.1f} Mbps)"
+                )
                 
             params = self.calculate_cbs_params(stream)
             results[stream.name] = params
@@ -215,7 +256,15 @@ class CBSCalculator:
         total_utilization = (total_reserved / self.link_speed_mbps) * 100
         
         if total_utilization > 80:
-            print(f"경고: 전체 대역폭 사용률 {total_utilization:.1f}% (권장: < 80%)")
+            logger.warning(
+                f"High bandwidth utilization: {total_utilization:.1f}% "
+                f"(recommended: < 80% for stability)"
+            )
+        elif total_utilization > 95:
+            logger.error(
+                f"Critical bandwidth utilization: {total_utilization:.1f}% "
+                f"(may cause frame loss)"
+            )
         
         return results
     
@@ -693,8 +742,18 @@ class CBSCalculator:
         return pd.DataFrame(comparison_results)
 
 
-def example_autonomous_vehicle():
-    """Automotive ADAS example with 1 Gigabit Ethernet"""
+def example_automotive_adas():
+    """Production-ready automotive ADAS example with 1 Gigabit Ethernet
+    
+    This example demonstrates a realistic ADAS deployment scenario with:
+    - Multiple camera streams for surround view
+    - LiDAR sensor data for object detection  
+    - Radar for collision avoidance
+    - Control messages for actuator commands
+    - V2X communication for cooperative awareness
+    """
+    
+    logger.info("Starting Automotive ADAS CBS Configuration")
     
     # Create CBS calculator for 1 Gigabit network
     calculator = CBSCalculator(link_speed_mbps=1000)
@@ -790,4 +849,8 @@ def example_autonomous_vehicle():
 
 
 if __name__ == "__main__":
-    example_autonomous_vehicle()
+    try:
+        example_automotive_adas()
+    except Exception as e:
+        logger.error(f"Error in CBS calculation: {e}")
+        raise
