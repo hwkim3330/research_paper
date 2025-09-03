@@ -121,12 +121,12 @@ class CBSCalculator:
         }
     }
     
-    def __init__(self, link_speed_mbps: float = 1000):
+    def __init__(self, link_speed_mbps: float = 10000):
         """
-        초기화
+        Initialize CBS Calculator for high-speed networks
         
         Args:
-            link_speed_mbps: 링크 속도 (Mbps)
+            link_speed_mbps: Link speed in Mbps (default: 10000 for 10 GbE)
         """
         self.link_speed_mbps = link_speed_mbps
         self.link_speed_bps = link_speed_mbps * 1_000_000
@@ -694,10 +694,10 @@ class CBSCalculator:
 
 
 def example_autonomous_vehicle():
-    """자율주행 차량 예제"""
+    """Next-generation autonomous vehicle example with 10 GbE"""
     
-    # CBS 계산기 생성
-    calculator = CBSCalculator(link_speed_mbps=1000)
+    # Create CBS calculator for 10 Gigabit network
+    calculator = CBSCalculator(link_speed_mbps=10000)
     
     # 스트림 정의
     streams = [
@@ -705,50 +705,54 @@ def example_autonomous_vehicle():
         StreamConfig("Emergency_Brake", TrafficType.SAFETY_CRITICAL, 2, 100, "N/A", 7, 5, 0.5),
         StreamConfig("Steering_Control", TrafficType.SAFETY_CRITICAL, 1, 100, "N/A", 7, 5, 0.5),
         
-        # 전방 4K 카메라
-        StreamConfig("Front_Center_4K", TrafficType.VIDEO_4K, 25, 60, "3840x2160", 6, 20, 3),
-        StreamConfig("Front_Left_4K", TrafficType.VIDEO_4K, 25, 60, "3840x2160", 6, 20, 3),
-        StreamConfig("Front_Right_4K", TrafficType.VIDEO_4K, 25, 60, "3840x2160", 6, 20, 3),
+        # Multiple 4K cameras for Level 5 autonomy
+        StreamConfig("Front_Center_4K", TrafficType.VIDEO_4K, 50, 60, "3840x2160", 6, 10, 1.5),
+        StreamConfig("Front_Left_4K", TrafficType.VIDEO_4K, 50, 60, "3840x2160", 6, 10, 1.5),
+        StreamConfig("Front_Right_4K", TrafficType.VIDEO_4K, 50, 60, "3840x2160", 6, 10, 1.5),
+        StreamConfig("Front_Wide_4K", TrafficType.VIDEO_4K, 50, 60, "3840x2160", 6, 10, 1.5),
+        StreamConfig("Rear_Center_4K", TrafficType.VIDEO_4K, 50, 60, "3840x2160", 6, 10, 1.5),
+        StreamConfig("Side_Left_4K", TrafficType.VIDEO_4K, 50, 60, "3840x2160", 6, 10, 1.5),
+        StreamConfig("Side_Right_4K", TrafficType.VIDEO_4K, 50, 60, "3840x2160", 6, 10, 1.5),
         
-        # 서라운드 1080p 카메라
-        StreamConfig("Left_Front_HD", TrafficType.VIDEO_1080P, 15, 30, "1920x1080", 5, 30, 5),
-        StreamConfig("Left_Rear_HD", TrafficType.VIDEO_1080P, 15, 30, "1920x1080", 5, 30, 5),
-        StreamConfig("Right_Front_HD", TrafficType.VIDEO_1080P, 15, 30, "1920x1080", 5, 30, 5),
-        StreamConfig("Right_Rear_HD", TrafficType.VIDEO_1080P, 15, 30, "1920x1080", 5, 30, 5),
-        StreamConfig("Rear_Center_HD", TrafficType.VIDEO_1080P, 15, 30, "1920x1080", 5, 30, 5),
-        StreamConfig("Rear_Wide_HD", TrafficType.VIDEO_1080P, 15, 30, "1920x1080", 5, 30, 5),
+        # 8K streams for critical perception
+        StreamConfig("Main_Perception_8K", TrafficType.VIDEO_4K, 800, 30, "7680x4320", 7, 8, 1.0),
+        StreamConfig("Emergency_Detection_8K", TrafficType.VIDEO_4K, 800, 30, "7680x4320", 7, 8, 1.0),
         
-        # 센서 데이터
-        StreamConfig("Lidar_Main", TrafficType.LIDAR, 100, 10, "N/A", 4, 40, 4),
-        StreamConfig("Radar_Fusion", TrafficType.RADAR, 16, 50, "N/A", 3, 20, 2),
+        
+        # High-resolution sensor data for 10 GbE
+        StreamConfig("Lidar_Main_128Ch", TrafficType.LIDAR, 500, 20, "N/A", 4, 5, 0.5),
+        StreamConfig("Lidar_Secondary_64Ch", TrafficType.LIDAR, 250, 20, "N/A", 4, 5, 0.5),
+        StreamConfig("Radar_Fusion_Array", TrafficType.RADAR, 80, 100, "N/A", 3, 2, 0.2),
+        StreamConfig("Ultrasonic_Array", TrafficType.RADAR, 20, 200, "N/A", 3, 10, 1.0),
         
         # V2X
         StreamConfig("V2X_Safety", TrafficType.V2X, 10, 10, "N/A", 2, 100, 10),
         
-        # 인포테인먼트
-        StreamConfig("Infotainment", TrafficType.INFOTAINMENT, 50, 30, "N/A", 1, 500, 50),
+        # Next-gen infotainment for 10 GbE
+        StreamConfig("Infotainment_8K", TrafficType.INFOTAINMENT, 400, 60, "7680x4320", 1, 100, 10),
+        StreamConfig("Passenger_Displays", TrafficType.INFOTAINMENT, 200, 60, "4K Multi", 1, 100, 10),
         
         # 진단
         StreamConfig("Diagnostics", TrafficType.DIAGNOSTICS, 5, 1, "N/A", 0, 1000, 100),
     ]
     
     print("=" * 80)
-    print("자율주행 차량 CBS 파라미터 계산")
+    print("Next-Generation Level 5 Autonomous Vehicle - 10 GbE CBS Parameters")
     print("=" * 80)
     
     # 전체 트래픽 분석
     total_bitrate = sum(s.bitrate_mbps for s in streams)
-    print(f"\n전체 트래픽: {total_bitrate:.1f} Mbps")
-    print(f"링크 속도: {calculator.link_speed_mbps} Mbps")
-    print(f"기본 사용률: {(total_bitrate/calculator.link_speed_mbps)*100:.1f}%")
+    print(f"\nTotal Traffic: {total_bitrate:.1f} Mbps")
+    print(f"Link Speed: {calculator.link_speed_mbps} Mbps (10 Gigabit Ethernet)")
+    print(f"Base Utilization: {(total_bitrate/calculator.link_speed_mbps)*100:.1f}%")
     
     # CBS 파라미터 계산
-    print("\n최적화된 CBS 파라미터 계산 중...")
-    params = calculator.optimize_parameters(streams, target_utilization=75)
+    print("\nCalculating optimized CBS parameters for 10 GbE...")
+    params = calculator.optimize_parameters(streams, target_utilization=85)
     
     # 결과 출력
     print("\n" + "=" * 80)
-    print("CBS 파라미터 (우선순위 순)")
+    print("CBS Parameters (Priority Order) - 10 Gigabit Ethernet")
     print("=" * 80)
     
     # 우선순위별로 정렬하여 출력
@@ -757,38 +761,41 @@ def example_autonomous_vehicle():
     for stream in sorted_streams:
         param = params[stream.name]
         print(f"\n[{stream.name}]")
-        print(f"  트래픽 유형: {stream.traffic_type.value}")
-        print(f"  우선순위: TC{stream.priority}")
-        print(f"  실제 비트레이트: {stream.bitrate_mbps} Mbps")
-        print(f"  예약 대역폭: {param.reserved_bandwidth_mbps:.1f} Mbps")
+        print(f"  Traffic Type: {stream.traffic_type.value}")
+        print(f"  Priority: TC{stream.priority}")
+        print(f"  Actual Bitrate: {stream.bitrate_mbps} Mbps")
+        print(f"  Reserved Bandwidth: {param.reserved_bandwidth_mbps:.1f} Mbps")
         print(f"  idleSlope: {param.idle_slope:,} bps")
         print(f"  sendSlope: {param.send_slope:,} bps")
         print(f"  hiCredit: {param.hi_credit:,} bits")
         print(f"  loCredit: {param.lo_credit:,} bits")
-        print(f"  효율성: {param.efficiency_percent:.1f}%")
+        print(f"  Efficiency: {param.efficiency_percent:.1f}%")
     
     # 전체 통계
     total_reserved = sum(p.reserved_bandwidth_mbps for p in params.values())
     total_utilization = (total_reserved / calculator.link_speed_mbps) * 100
     
     print("\n" + "=" * 80)
-    print("전체 네트워크 통계")
+    print("10 Gigabit Network Statistics")
     print("=" * 80)
-    print(f"총 예약 대역폭: {total_reserved:.1f} Mbps")
-    print(f"네트워크 사용률: {total_utilization:.1f}%")
-    print(f"여유 대역폭: {calculator.link_speed_mbps - total_reserved:.1f} Mbps")
+    print(f"Total Reserved Bandwidth: {total_reserved:.1f} Mbps")
+    print(f"Network Utilization: {total_utilization:.1f}%")
+    print(f"Available Bandwidth: {calculator.link_speed_mbps - total_reserved:.1f} Mbps")
+    print(f"Concurrent Streams Supported: {len(streams)}")
+    print(f"Maximum 4K Streams: ~{int((calculator.link_speed_mbps * 0.8) / 50)}")
+    print(f"Maximum 8K Streams: ~{int((calculator.link_speed_mbps * 0.8) / 800)}")
     
-    # 구성 파일 생성
-    calculator.generate_config_file(streams, "autonomous_vehicle_cbs.yaml")
+    # Generate configuration files for 10 GbE deployment
+    calculator.generate_config_file(streams, "autonomous_vehicle_10gbe_cbs.yaml")
     
     # 검증
     warnings = calculator.validate_configuration(params)
     if warnings:
-        print("\n⚠️  검증 경고:")
+        print("\n⚠️  Validation Warnings:")
         for warning in warnings:
             print(f"  - {warning}")
     else:
-        print("\n✅ 모든 검증 통과")
+        print("\n✅ All validations passed - Ready for 10 GbE production deployment")
 
 
 if __name__ == "__main__":
