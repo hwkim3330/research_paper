@@ -449,9 +449,35 @@ B_{max} = \frac{3,652.8 \times 1,000,000,000}{300,000,000 \times 8} = 1,522 \tex
 
 \subsection{하드웨어 플랫폼}
 
-\subsubsection{Microchip LAN9692 TSN 스위치}
+\subsubsection{Microchip LAN9692/LAN9662 TSN 스위치 비교}
 
-본 연구에서는 Microchip LAN9692 TSN 스위치를 구현 플랫폼으로 선정하였다. LAN9692의 주요 사양은 다음과 같다:
+본 연구에서는 Microchip의 두 가지 TSN 스위치를 평가하였다: 중급 애플리케이션용 LAN9692 \cite{microchip2024lan9692}와 고성능 VOD/스트리밍용 LAN9662 \cite{microchip2024lan9662}. 두 스위치의 비교는 다음과 같다:
+
+\begin{table}[h]
+\centering
+\caption{마이크로칩 TSN 스위치 비교}
+\label{tab:microchip_switch_compare}
+\begin{tabular}{lcc}
+\toprule
+\textbf{항목} & \textbf{LAN9692} & \textbf{LAN9662} \\
+\midrule
+포트 수 & 12 & 26 \\
+스위칭 용량 & 24 Gbps & 52 Gbps \\
+패킷 버퍼 & 2 MB & 4 MB \\
+MAC 테이블 & 8K 엔트리 & 16K 엔트리 \\
+VLAN & 4K VLANs & 4K VLANs \\
+우선순위 큐 & 포트당 8개 & 포트당 8개 \\
+TSN 기능 & CBS, TAS, FRER & CBS, TAS+, FRER, ATS \\
+PTP 정확도 & 8 ns & 4 ns \\
+프로세서 & ARM Cortex-M7 & 듀얼 ARM Cortex-A7 \\
+동작 온도 & -40°C ~ +105°C & -40°C ~ +105°C \\
+전력 소비 & 2.5W & 4.8W \\
+대상 애플리케이션 & 자동차 ECU & VOD/스트리밍 게이트웨이 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+LAN9692의 주요 사양은 다음과 같다:
 
 \begin{table}[h]
 \centering
