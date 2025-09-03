@@ -743,10 +743,10 @@ research_paper/
 
 **TSN팀, 차량전자연구부**
 
-- 김현우 - CBS 구현 및 실험
-- 송현수 - 네트워크 설정 및 분석  
-- 안종화 - 영상 스트림 처리
-- 박부식 - 프로젝트 총괄
+- Research Team A - CBS 구현 및 실험
+- Research Team B - 네트워크 설정 및 분석  
+- Research Team C - 영상 스트림 처리
+- Research Team D - 프로젝트 총괄
 
 ---
 

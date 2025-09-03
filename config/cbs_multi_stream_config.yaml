@@ -1,0 +1,375 @@
+# CBS 다중 영상 스트림 구성
+# 실제 자율주행 차량 네트워크 시나리오
+# 3개 4K 카메라 + 6개 1080p 카메라 + 센서 데이터
+
+system-config:
+  name: "Autonomous_Vehicle_TSN_Network"
+  version: "3.0.0"
+  deployment: "Production"
+  
+# 네트워크 토폴로지
+topology:
+  switches:
+    - id: "SW1"
+      model: "LAN9692"
+      role: "Central_Backbone"
+      ports: 12
+      location: "Center_Console"
+      
+  links:
+    - port: 1
+      device: "Front_Center_Camera"
+      bandwidth: 1000
+      type: "1000BASE-T1"
+      
+    - port: 2
+      device: "Front_Left_Camera"
+      bandwidth: 1000
+      type: "1000BASE-T1"
+      
+    - port: 3
+      device: "Front_Right_Camera"
+      bandwidth: 1000
+      type: "1000BASE-T1"
+      
+    - port: 4
+      device: "Left_Side_Cameras"
+      bandwidth: 1000
+      type: "1000BASE-T1"
+      
+    - port: 5
+      device: "Right_Side_Cameras"
+      bandwidth: 1000
+      type: "1000BASE-T1"
+      
+    - port: 6
+      device: "Rear_Cameras"
+      bandwidth: 1000
+      type: "1000BASE-T1"
+      
+    - port: 7
+      device: "Lidar_Controller"
+      bandwidth: 1000
+      type: "1000BASE-T1"
+      
+    - port: 8
+      device: "Radar_Fusion_Unit"
+      bandwidth: 1000
+      type: "1000BASE-T1"
+      
+    - port: 9
+      device: "Domain_Controller_1"
+      bandwidth: 1000
+      type: "1000BASE-T1"
+      
+    - port: 10
+      device: "Domain_Controller_2"
+      bandwidth: 1000
+      type: "1000BASE-T1"
+      
+    - port: 11
+      device: "Infotainment_Gateway"
+      bandwidth: 1000
+      type: "1000BASE-T1"
+      
+    - port: 12
+      device: "Diagnostic_Port"
+      bandwidth: 1000
+      type: "1000BASE-T1"
+
+# 트래픽 클래스 정의
+traffic-classes:
+  # TC7: 최고 우선순위 - 안전 Critical
+  - class: 7
+    name: "Safety_Critical"
+    description: "Emergency braking, steering control"
+    bandwidth-percent: 5
+    max-latency-ms: 10
+    max-jitter-ms: 1
+    loss-tolerance: 0
+    
+  # TC6: 전방 4K 카메라
+  - class: 6
+    name: "Front_4K_Cameras"
+    description: "3x 4K 60fps front cameras for ADAS"
+    bandwidth-percent: 25  # 3 × 25Mbps = 75Mbps + headroom
+    max-latency-ms: 30
+    max-jitter-ms: 3
+    loss-tolerance: 0.01
+    
+  # TC5: 서라운드 1080p 카메라
+  - class: 5
+    name: "Surround_HD_Cameras"
+    description: "6x 1080p 30fps surround view"
+    bandwidth-percent: 20  # 6 × 15Mbps = 90Mbps + headroom
+    max-latency-ms: 50
+    max-jitter-ms: 5
+    loss-tolerance: 0.1
+    
+  # TC4: 라이다 데이터
+  - class: 4
+    name: "Lidar_PointCloud"
+    description: "3D point cloud data"
+    bandwidth-percent: 15  # 100Mbps + headroom
+    max-latency-ms: 40
+    max-jitter-ms: 4
+    loss-tolerance: 0.05
+    
+  # TC3: 레이더 트랙
+  - class: 3
+    name: "Radar_Tracks"
+    description: "Object tracking data from 8 radars"
+    bandwidth-percent: 5  # 8 × 2Mbps = 16Mbps + headroom
+    max-latency-ms: 20
+    max-jitter-ms: 2
+    loss-tolerance: 0
+    
+  # TC2: V2X 통신
+  - class: 2
+    name: "V2X_Communication"
+    description: "Vehicle-to-everything messages"
+    bandwidth-percent: 10
+    max-latency-ms: 100
+    max-jitter-ms: 10
+    loss-tolerance: 0.5
+    
+  # TC1: 인포테인먼트
+  - class: 1
+    name: "Infotainment"
+    description: "Entertainment and comfort features"
+    bandwidth-percent: 15
+    max-latency-ms: 500
+    max-jitter-ms: 50
+    loss-tolerance: 1
+    
+  # TC0: 베스트 에포트
+  - class: 0
+    name: "Best_Effort"
+    description: "Diagnostics, logs, OTA updates"
+    bandwidth-percent: 5  # Remaining bandwidth
+    max-latency-ms: 1000
+    max-jitter-ms: 100
+    loss-tolerance: 5
+
+# CBS 파라미터 (자동 계산됨)
+cbs-parameters:
+  port-1:  # Front Center Camera
+    traffic-class-6:
+      enabled: true
+      stream-name: "Front_Center_4K"
+      bitrate-mbps: 25
+      idle-slope: 30000000     # 30 Mbps (25 + 20% headroom)
+      send-slope: -970000000    # -970 Mbps
+      hi-credit: 365            # bits
+      lo-credit: -11814         # bits
+      
+  port-2:  # Front Left Camera
+    traffic-class-6:
+      enabled: true
+      stream-name: "Front_Left_4K"
+      bitrate-mbps: 25
+      idle-slope: 30000000
+      send-slope: -970000000
+      hi-credit: 365
+      lo-credit: -11814
+      
+  port-3:  # Front Right Camera
+    traffic-class-6:
+      enabled: true
+      stream-name: "Front_Right_4K"
+      bitrate-mbps: 25
+      idle-slope: 30000000
+      send-slope: -970000000
+      hi-credit: 365
+      lo-credit: -11814
+      
+  port-4:  # Left Side Cameras (2x 1080p)
+    traffic-class-5:
+      enabled: true
+      stream-name: "Left_Side_HD"
+      bitrate-mbps: 30  # 2 × 15Mbps
+      idle-slope: 36000000     # 36 Mbps (30 + 20% headroom)
+      send-slope: -964000000
+      hi-credit: 438
+      lo-credit: -11737
+      
+  port-5:  # Right Side Cameras (2x 1080p)
+    traffic-class-5:
+      enabled: true
+      stream-name: "Right_Side_HD"
+      bitrate-mbps: 30
+      idle-slope: 36000000
+      send-slope: -964000000
+      hi-credit: 438
+      lo-credit: -11737
+      
+  port-6:  # Rear Cameras (2x 1080p)
+    traffic-class-5:
+      enabled: true
+      stream-name: "Rear_HD"
+      bitrate-mbps: 30
+      idle-slope: 36000000
+      send-slope: -964000000
+      hi-credit: 438
+      lo-credit: -11737
+      
+  port-7:  # Lidar
+    traffic-class-4:
+      enabled: true
+      stream-name: "Lidar_3D"
+      bitrate-mbps: 100
+      idle-slope: 120000000    # 120 Mbps (100 + 20% headroom)
+      send-slope: -880000000
+      hi-credit: 1461
+      lo-credit: -10714
+      
+  port-8:  # Radar Fusion
+    traffic-class-3:
+      enabled: true
+      stream-name: "Radar_Fusion"
+      bitrate-mbps: 16  # 8 radars × 2Mbps
+      idle-slope: 20000000     # 20 Mbps (16 + 25% headroom)
+      send-slope: -980000000
+      hi-credit: 244
+      lo-credit: -11936
+
+# 스트림 그룹 정의 (동기화된 스트림)
+stream-groups:
+  - group-id: "Front_Vision"
+    description: "Synchronized front cameras for stereo vision"
+    streams:
+      - "Front_Center_4K"
+      - "Front_Left_4K"
+      - "Front_Right_4K"
+    sync-tolerance-us: 100  # 마이크로초
+    
+  - group-id: "Surround_View"
+    description: "360-degree surround view"
+    streams:
+      - "Left_Side_HD"
+      - "Right_Side_HD"
+      - "Rear_HD"
+    sync-tolerance-us: 500
+    
+  - group-id: "Sensor_Fusion"
+    description: "Multi-sensor fusion input"
+    streams:
+      - "Lidar_3D"
+      - "Radar_Fusion"
+    sync-tolerance-us: 1000
+
+# VLAN 구성
+vlan-config:
+  safety-vlan:
+    id: 100
+    name: "Safety_Critical_VLAN"
+    ports: [1, 2, 3, 7, 8, 9, 10]
+    pcp-mapping:
+      7: "Safety_Critical"
+      6: "Front_Cameras"
+      4: "Lidar"
+      3: "Radar"
+      
+  infotainment-vlan:
+    id: 200
+    name: "Infotainment_VLAN"
+    ports: [11, 12]
+    pcp-mapping:
+      2: "V2X"
+      1: "Entertainment"
+      0: "Best_Effort"
+
+# 모니터링 임계값
+monitoring:
+  alarms:
+    - metric: "frame-loss-rate"
+      traffic-class: [6, 7]  # Critical cameras and safety
+      threshold: 0.1  # 0.1%
+      severity: "critical"
+      action: "immediate-alert"
+      
+    - metric: "latency-ms"
+      traffic-class: 7  # Safety critical
+      threshold: 10
+      severity: "critical"
+      action: "failover"
+      
+    - metric: "jitter-ms"
+      traffic-class: 6  # 4K cameras
+      threshold: 5
+      severity: "warning"
+      action: "log-and-adjust"
+      
+    - metric: "bandwidth-utilization"
+      traffic-class: "all"
+      threshold: 95  # percent
+      severity: "info"
+      action: "optimize"
+      
+    - metric: "credit-exhaustion"
+      traffic-class: [4, 5, 6]
+      threshold: -10000  # bits
+      severity: "warning"
+      action: "rebalance"
+
+# 동적 조정 정책
+dynamic-adjustment:
+  enabled: true
+  
+  policies:
+    - name: "Highway_Mode"
+      trigger: "speed > 80 km/h"
+      adjustments:
+        - increase: "Front_4K_Cameras"
+          by: 20  # percent
+        - decrease: "Rear_HD"
+          by: 30  # percent
+          
+    - name: "Parking_Mode"
+      trigger: "speed < 10 km/h"
+      adjustments:
+        - increase: "Surround_HD_Cameras"
+          by: 50  # percent
+        - decrease: "Front_4K_Cameras"
+          by: 40  # percent
+          
+    - name: "Emergency_Mode"
+      trigger: "emergency_brake_active"
+      adjustments:
+        - maximize: "Safety_Critical"
+        - maximize: "Front_4K_Cameras"
+        - minimize: "Infotainment"
+        - pause: "Best_Effort"
+        
+    - name: "Tunnel_Mode"
+      trigger: "gps_signal_lost"
+      adjustments:
+        - increase: "Front_4K_Cameras"
+          by: 10  # percent
+        - maintain: "all"  # Keep current settings
+
+# 성능 벤치마크 목표
+performance-targets:
+  safety-critical:
+    max-latency: 5  # ms
+    max-jitter: 0.5  # ms
+    min-bandwidth: 50  # Mbps
+    packet-loss: 0  # percent
+    
+  video-streams:
+    max-latency: 20  # ms
+    max-jitter: 3  # ms
+    min-bandwidth: 240  # Mbps total for all cameras
+    packet-loss: 0.01  # percent
+    
+  sensor-data:
+    max-latency: 30  # ms
+    max-jitter: 5  # ms
+    min-bandwidth: 116  # Mbps (Lidar + Radar)
+    packet-loss: 0.05  # percent
+    
+  overall-network:
+    utilization: 75  # percent average
+    peak-utilization: 95  # percent maximum
+    recovery-time: 100  # ms after failure
+    failover-time: 50  # ms to backup path

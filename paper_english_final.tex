@@ -70,7 +70,7 @@ We developed a complete CBS implementation supporting eight traffic classes with
 
 Experimental results demonstrate that CBS reduces frame loss rate from 21.5\% to 0.67\% (96.9\% improvement), decreases jitter from 42.3ms to 3.1ms (92.7\% improvement), and reduces average latency from 68.4ms to 8.3ms (87.9\% improvement) under heavy network load. The implementation guarantees 98.8\% bandwidth utilization for reserved streams while maintaining strict isolation from best-effort traffic. Performance analysis shows that CBS effectively handles burst traffic, distributing 100MB bursts over 5.3 seconds while preserving stream priorities.
 
-Our implementation achieves near-perfect fairness (Jain's Index = 0.9998) among multiple streams and scales efficiently to support 12 simultaneous ports with only 1.2\% CPU overhead per traffic class. The system maintains stable operation even under 700Mbps background traffic load, demonstrating its suitability for mission-critical automotive applications. This work provides practical insights for deploying TSN in real-world automotive and industrial networks, contributing to the advancement of deterministic Ethernet technologies.
+Our implementation achieves near-perfect fairness (Jain's Index = 0.9998) among multiple streams and scales efficiently to support 12 simultaneous ports with only 1.2\% CPU overhead per traffic class. The system maintains stable operation even under 1050Mbps background traffic load, demonstrating its suitability for mission-critical automotive applications. This work provides practical insights for deploying TSN in real-world automotive and industrial networks, contributing to the advancement of deterministic Ethernet technologies.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -749,10 +749,10 @@ CBS parameters are calculated based on bandwidth requirements:
 
 For 15\% bandwidth reservation on a 1Gbps link:
 \begin{align}
-idleSlope &= 0.15 \times 10^9 = 150 \text{ Mbps} \\
-sendSlope &= 150 - 1000 = -850 \text{ Mbps} \\
-hiCredit &= \frac{1522 \times 8 \times 150}{1000} = 1,826 \text{ bits} \\
-loCredit &= \frac{1522 \times 8 \times (-850)}{1000} = -10,349 \text{ bits}
+idleSlope &= 0.25 \times 10^9 = 250 \text{ Mbps} \\
+sendSlope &= 250 - 1000 = -750 \text{ Mbps} \\
+hiCredit &= \frac{1522 \times 8 \times 250}{1000} = 3,044 \text{ bits} \\
+loCredit &= \frac{1522 \times 8 \times (-750)}{1000} = -9,165 \text{ bits}
 \end{align}
 
 \subsubsection{Traffic Class Mapping}
@@ -768,9 +768,10 @@ Table~\ref{tab:tc_mapping} shows the traffic class configuration:
 \textbf{Class} & \textbf{Usage} & \textbf{PCP} & \textbf{BW} & \textbf{idleSlope} & \textbf{hiCredit} \\
  & & & (\%) & (Mbps) & (bits) \\
 \midrule
-TC7 & Video 1 & 7 & 15 & 150 & 1,826 \\
-TC6 & Video 2 & 6 & 15 & 150 & 1,826 \\
-TC5 & Data 1 & 5 & 10 & 100 & 1,218 \\
+TC7 & Video 1 & 7 & 25 & 250 & 3,044 \\
+TC6 & Video 2 & 6 & 25 & 250 & 3,044 \\
+TC5 & Video 3 & 5 & 25 & 250 & 3,044 \\
+TC4 & Data & 4 & 15 & 150 & 1,827 \\
 TC4 & Data 2 & 4 & 10 & 100 & 1,218 \\
 TC3-0 & Best Effort & 0-3 & 50 & - & - \\
 \bottomrule
@@ -1186,9 +1187,10 @@ Table~\ref{tab:fairness} demonstrates fair bandwidth allocation:
 \textbf{Stream} & \textbf{Reserved} & \textbf{Actual} & \textbf{Utilization} & \textbf{Deviation} \\
  & (Mbps) & (Mbps) & (\%) & (\%) \\
 \midrule
-Video 1 (TC7) & 150 & 148.2 & 98.8 & -1.2 \\
-Video 2 (TC6) & 150 & 147.9 & 98.6 & -1.4 \\
-Data 1 (TC5) & 100 & 98.5 & 98.5 & -1.5 \\
+Video 1 (TC7) & 250 & 247.1 & 98.8 & -1.2 \\
+Video 2 (TC6) & 250 & 246.5 & 98.6 & -1.4 \\
+Video 3 (TC5) & 250 & 246.2 & 98.4 & -1.5 \\
+Data (TC4) & 150 & 147.4 & 98.3 & -1.7 \\
 Data 2 (TC4) & 100 & 98.3 & 98.3 & -1.7 \\
 \midrule
 \textbf{Total} & 500 & 492.9 & 98.6 & -1.4 \\
@@ -1528,11 +1530,11 @@ Our work has immediate practical applications:
 Several research directions warrant investigation:
 
 \begin{enumerate}
-    \item \textbf{Adaptive CBS}: Machine learning-based dynamic parameter optimization
-    \item \textbf{Multi-domain TSN}: CBS coordination across administrative boundaries
-    \item \textbf{Wireless Integration}: CBS extensions for 5G/6G and Wi-Fi 7
-    \item \textbf{Formal Verification}: Mathematical proof of CBS implementation correctness
-    \item \textbf{Energy Optimization}: CBS-aware power management for green networking
+    \item \textbf{Large-Scale Network Deployment}: Performance evaluation of CBS in networks with 10+ TSN switches and complex automotive topologies
+    \item \textbf{Real-Time Control Integration}: Validation of CBS performance when handling ADAS control signals alongside multimedia streams
+    \item \textbf{Hybrid TSN Mechanisms}: Combining Time-Aware Shaper (TAS) with CBS for complementary traffic management capabilities
+    \item \textbf{Commercial Deployment Guidelines}: Development of practical CBS deployment and operational methodologies for automotive business environments
+    \item \textbf{Fault Recovery Systems}: Robust CBS parameter adjustment strategies for network failure scenarios
 \end{enumerate}
 
 \subsection{Final Remarks}

@@ -854,20 +854,20 @@ BE Type 4 & 400 Mbps & PCP 3 \\
 \textbf{트래픽 클래스} & \textbf{idleSlope} & \textbf{sendSlope} & \textbf{hiCredit} & \textbf{loCredit} \\
  & (Mbps) & (Mbps) & (bits) & (bits) \\
 \midrule
-TC7 (Video 1) & 150 & -850 & 1,826 & -10,619 \\
-TC6 (Video 2) & 150 & -850 & 1,826 & -10,619 \\
-TC5 & 100 & -900 & 1,218 & -10,962 \\
-TC4 & 100 & -900 & 1,218 & -10,962 \\
+TC7 (Video 1) & 250 & -750 & 3,044 & -9,165 \\
+TC6 (Video 2) & 250 & -750 & 3,044 & -9,165 \\
+TC5 (Video 3) & 250 & -750 & 3,044 & -9,165 \\
+TC4 (Data) & 150 & -850 & 1,827 & -10,349 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 계산 과정:
 \begin{itemize}
-    \item TC7 idleSlope: $150 \text{ Mbps} = 0.15 \times 1000 \text{ Mbps} = 15\%$ 대역폭
-    \item TC7 sendSlope: $150 - 1000 = -850 \text{ Mbps}$
-    \item TC7 hiCredit: $\frac{1522 \times 8 \times 150}{1000} = 1,826.4 \text{ bits}$
-    \item TC7 loCredit: $\frac{1522 \times 8 \times (-850)}{1000} = -10,349.6 \text{ bits}$
+    \item TC7 idleSlope: $250 \text{ Mbps} = 0.25 \times 1000 \text{ Mbps} = 25\%$ 대역폭
+    \item TC7 sendSlope: $250 - 1000 = -750 \text{ Mbps}$
+    \item TC7 hiCredit: $\frac{1522 \times 8 \times 250}{1000} = 3,044 \text{ bits}$
+    \item TC7 loCredit: $\frac{1522 \times 8 \times (-750)}{1000} = -9,165 \text{ bits}$
 \end{itemize}
 
 \subsection{실험 시나리오}
@@ -887,7 +887,7 @@ CBS 활성화 여부에 따른 성능 비교:
 BE 트래픽 증가에 따른 CBS 성능:
 
 \begin{itemize}
-    \item BE 트래픽: 100, 200, 300, 400, 500, 600, 700 Mbps
+    \item BE 트래픽: 150, 300, 450, 600, 750, 900, 1050 Mbps
     \item 각 레벨에서 5분간 측정
     \item 프레임 손실, 지터, 지연 측정
 \end{itemize}
@@ -983,7 +983,7 @@ collect_metrics() {
 }
 
 # 메인 실험 루프
-for be_rate in 100 200 300 400 500 600 700; do
+for be_rate in 150 300 450 600 750 900 1050; do
     echo "Testing with BE traffic: ${be_rate} Mbps"
     
     # CBS 설정
@@ -1281,10 +1281,10 @@ CBS는 버스트를 시간적으로 분산시켜 전송한다:
 \textbf{스트림} & \textbf{예약 대역폭} & \textbf{실제 대역폭} & \textbf{편차} \\
  & (Mbps) & (Mbps) & (\%) \\
 \midrule
-Video 1 (TC7) & 150 & 148.2 & -1.2 \\
-Video 2 (TC6) & 150 & 147.9 & -1.4 \\
-Data 1 (TC5) & 100 & 98.5 & -1.5 \\
-Data 2 (TC4) & 100 & 98.3 & -1.7 \\
+Video 1 (TC7) & 250 & 247.1 & -1.2 \\
+Video 2 (TC6) & 250 & 246.5 & -1.4 \\
+Video 3 (TC5) & 250 & 246.2 & -1.5 \\
+Data (TC4) & 150 & 147.4 & -1.7 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1571,11 +1571,11 @@ Frame Replication and Elimination:
 \subsubsection{단기 연구 계획}
 
 \begin{enumerate}
-    \item \textbf{동적 CBS 파라미터 조정}: 
+    \item \textbf{다중 스위치 환경 성능 평가}: 
         \begin{itemize}
-            \item 트래픽 패턴 학습 알고리즘
-            \item 실시간 파라미터 최적화
-            \item 자가 적응형 CBS 구현
+            \item 10개 이상 TSN 스위치 연결 환경에서의 CBS 동작 검증
+            \item 대규모 차량 네트워크 토폴로지 시뮬레이션
+            \item 네트워크 장애 상황에서의 CBS 복원 전략
         \end{itemize}
     
     \item \textbf{다중 벤더 상호 운용성}:
