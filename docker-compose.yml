@@ -1,0 +1,283 @@
+version: '3.9'
+
+services:
+  # Main CBS application
+  cbs-app:
+    build:
+      context: .
+      target: production
+    container_name: cbs-production
+    ports:
+      - "5000:5000"
+    environment:
+      - CBS_ENV=production
+      - DATABASE_URL=postgresql://cbs:password@postgres:5432/cbs_db
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./config:/app/config:ro
+      - ./experimental_data.json:/app/experimental_data.json:ro
+      - cbs-logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - cbs-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Development environment
+  cbs-dev:
+    build:
+      context: .
+      target: development
+    container_name: cbs-development
+    ports:
+      - "5001:5000"
+      - "8888:8888"  # Jupyter
+      - "6006:6006"  # TensorBoard
+    environment:
+      - CBS_ENV=development
+      - JUPYTER_ENABLE_LAB=yes
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./config:/app/config
+      - ./notebooks:/app/notebooks
+      - ./experimental_data.json:/app/experimental_data.json
+      - dev-logs:/app/logs
+    networks:
+      - cbs-network
+    stdin_open: true
+    tty: true
+    command: /bin/bash -c "jupyter lab --ip=0.0.0.0 --allow-root --no-browser & python -m src.dashboard"
+
+  # Network simulator
+  simulator:
+    build:
+      context: .
+      target: simulator
+    container_name: cbs-simulator
+    privileged: true  # Required for network namespace operations
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+    ports:
+      - "6633:6633"  # OpenFlow
+    volumes:
+      - ./config:/app/config
+      - ./results:/app/results
+      - simulator-logs:/var/log/openvswitch
+    networks:
+      - cbs-network
+      - simulation-network
+    command: /bin/bash -c "service openvswitch-switch start && python -m src.network_simulator"
+
+  # ML training and inference
+  ml-service:
+    build:
+      context: .
+      target: ml-training
+    container_name: cbs-ml
+    ports:
+      - "5002:5000"
+      - "6007:6006"  # TensorBoard for ML
+    environment:
+      - CUDA_VISIBLE_DEVICES=0  # If GPU available
+    volumes:
+      - ./ml_models:/app/ml_models
+      - ./experimental_data.json:/app/experimental_data.json
+      - ml-logs:/app/logs
+      - ml-checkpoints:/app/checkpoints
+    networks:
+      - cbs-network
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+
+  # Performance testing
+  performance:
+    build:
+      context: .
+      target: performance
+    container_name: cbs-performance
+    volumes:
+      - ./results:/results
+      - ./config:/app/config
+    networks:
+      - cbs-network
+      - test-network
+    command: ["python", "-m", "src.performance_benchmark", "--iterations", "10", "--output", "/results"]
+
+  # Documentation server
+  docs:
+    build:
+      context: .
+      target: docs-server
+    container_name: cbs-docs
+    ports:
+      - "8080:80"
+    networks:
+      - cbs-network
+    restart: unless-stopped
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    container_name: cbs-postgres
+    environment:
+      - POSTGRES_DB=cbs_db
+      - POSTGRES_USER=cbs
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - cbs-network
+    restart: unless-stopped
+
+  # Redis cache
+  redis:
+    image: redis:7-alpine
+    container_name: cbs-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - cbs-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # Prometheus monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: cbs-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - cbs-network
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+
+  # Grafana visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: cbs-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=redis-datasource
+    volumes:
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+      - grafana-data:/var/lib/grafana
+    networks:
+      - cbs-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # Demo environment with everything
+  demo:
+    build:
+      context: .
+      target: demo
+    container_name: cbs-demo
+    ports:
+      - "5003:5000"  # Dashboard
+      - "8889:8888"  # Jupyter
+      - "6008:6006"  # TensorBoard
+      - "8501:8501"  # Streamlit
+      - "7860:7860"  # Gradio
+    environment:
+      - CBS_ENV=demo
+    volumes:
+      - ./:/app
+      - demo-outputs:/app/outputs
+    networks:
+      - cbs-network
+    stdin_open: true
+    tty: true
+    depends_on:
+      - postgres
+      - redis
+
+  # Traffic generator for testing
+  traffic-gen:
+    build:
+      context: .
+      dockerfile: Dockerfile.traffic
+    container_name: cbs-traffic-gen
+    networks:
+      - test-network
+    cap_add:
+      - NET_RAW
+    command: ["python", "-m", "src.traffic_generator", "--rate", "1000", "--duration", "300"]
+
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: cbs-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - cbs-network
+    depends_on:
+      - cbs-app
+      - docs
+      - grafana
+    restart: unless-stopped
+
+# Networks
+networks:
+  cbs-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+  simulation-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+  test-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/16
+
+# Volumes
+volumes:
+  postgres-data:
+  redis-data:
+  prometheus-data:
+  grafana-data:
+  cbs-logs:
+  dev-logs:
+  simulator-logs:
+  ml-logs:
+  ml-checkpoints:
+  demo-outputs:

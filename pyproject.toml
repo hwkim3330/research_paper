@@ -1,0 +1,221 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cbs-1gbe"
+version = "2.0.0"
+description = "IEEE 802.1Qav Credit-Based Shaper implementation for 1 Gigabit Ethernet"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "CBS Research Team", email = "cbs-research@example.com"}
+]
+maintainers = [
+    {name = "CBS Research Team", email = "cbs-research@example.com"}
+]
+keywords = [
+    "TSN", "Time-Sensitive Networking", "IEEE 802.1Qav", 
+    "Credit-Based Shaper", "Ethernet", "QoS", 
+    "Automotive", "Industrial Automation", "Video Streaming",
+    "Network Simulation", "Machine Learning", "1 Gigabit"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Telecommunications Industry",
+    "Topic :: System :: Networking",
+    "Topic :: Scientific/Engineering",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "scipy>=1.11.0",
+    "matplotlib>=3.7.0",
+    "pyyaml>=6.0",
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.3.0",
+    "flake8>=6.0.0",
+    "mypy>=1.5.1",
+    "pre-commit>=3.3.0",
+    "isort>=5.12.0",
+]
+ml = [
+    "torch>=2.0.1",
+    "tensorflow>=2.13.0",
+    "scikit-learn>=1.3.0",
+    "xgboost>=1.7.6",
+]
+hardware = [
+    "scapy>=2.5.0",
+    "paramiko>=3.2.0",
+    "pyserial>=3.5",
+]
+web = [
+    "flask>=2.3.2",
+    "streamlit>=1.25.0",
+    "plotly>=5.15.0",
+    "dash>=2.11.1",
+]
+docs = [
+    "sphinx>=7.1.2",
+    "sphinx-rtd-theme>=1.3.0",
+    "myst-parser>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/hwkim3330/research_paper"
+Repository = "https://github.com/hwkim3330/research_paper"
+Documentation = "https://hwkim3330.github.io/research_paper"
+"Bug Reports" = "https://github.com/hwkim3330/research_paper/issues"
+Changelog = "https://github.com/hwkim3330/research_paper/blob/main/CHANGELOG.md"
+
+[project.scripts]
+cbs-calculator = "src.cbs_calculator:main"
+cbs-simulator = "src.network_simulator:main"
+cbs-optimizer = "src.ml_optimizer:main"
+cbs-dashboard = "src.dashboard:main"
+cbs-benchmark = "src.performance_benchmark:main"
+cbs-test = "run_tests:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "hardware*", "tests*"]
+exclude = ["tests.data*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.yaml", "*.json", "*.md"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "scapy.*",
+    "paramiko.*",
+    "serial.*",
+    "tensorflow.*",
+    "torch.*",
+    "sklearn.*",
+    "xgboost.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+    "--tb=short",
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+    "--cov-fail-under=95",
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests", 
+    "performance: Performance tests",
+    "hardware: Hardware tests",
+    "slow: Slow running tests",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "setup.py",
+    "venv/*",
+    "env/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.flake8]
+max-line-length = 100
+extend-ignore = ["E203", "E501", "W503"]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".eggs",
+    "*.egg-info",
+    ".venv",
+    "venv",
+]
+
+[tool.bandit]
+exclude_dirs = ["tests", "test_*"]
+skips = ["B101", "B601"]
